@@ -531,6 +531,11 @@ static int wl_cfg80211_set_pmk(struct wiphy *wiphy, struct net_device *dev,
 static int wl_cfg80211_del_pmk(struct wiphy *wiphy, struct net_device *dev,
         const u8 *aa);
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(4, 13, 0) */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
+static void
+wl_cfg80211_set_okc_pmkinfo(struct bcm_cfg80211 *cfg, struct net_device *dev,
+	struct cfg80211_pmksa *pmksa);
+#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)) */
 
 /*
  * event & event Q handlers for cfg80211 interfaces
@@ -8045,6 +8050,29 @@ wl_update_pmklist(struct net_device *dev, struct wl_pmk_list *pmk_list,
 	}
 	return err;
 }
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
+static void
+wl_cfg80211_set_okc_pmkinfo(struct bcm_cfg80211 *cfg, struct net_device *dev,
+	struct cfg80211_pmksa *pmksa)
+{
+	uint8 iov_buf[WLC_IOCTL_SMLEN] = {0};
+	s32 err = 0;
+
+	err = wldev_iovar_setbuf(dev, "okc_info_pmk", pmksa->pmk, pmksa->pmk_len, iov_buf,
+		WLC_IOCTL_SMLEN, NULL);
+	if (err) {
+		/* could fail in case that 'okc' is not supported */
+		if (err == BCME_UNSUPPORTED) {
+			WL_DBG_MEM(("okc_info_pmk not supported. Ignore.\n"));
+		} else {
+			WL_INFORM_MEM(("okc_info_pmk failed (%d). Ignore.\n", err));
+		}
+	} else {
+		WL_DBG_MEM(("set okc_info_pmk complete.\n"));
+	}
+	return;
+}
+#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)) */
 
 /* TODO: remove temporal cfg->pmk_list list, and call wl_cfg80211_update_pmksa for single
  * entry operation.
@@ -8203,6 +8231,7 @@ static s32 wl_cfg80211_update_pmksa(struct wiphy *wiphy, struct net_device *dev,
 				goto exit;
 			}
 			pmk_list->pmkid->pmk_len = pmksa->pmk_len;
+			wl_cfg80211_set_okc_pmkinfo(cfg, dev, pmksa);
 		}
 		if (pmksa->ssid) {
 			err = memcpy_s(&pmk_list->pmkid->ssid, sizeof(pmk_list->pmkid->ssid),

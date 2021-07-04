@@ -2417,6 +2417,10 @@ int __mfc_core_nal_q_handle_error(struct mfc_core *core, struct mfc_core_ctx *co
 		 * one input buffer is returned and the NAL-Q mode continues.
 		 */
 		if (err == MFC_REG_ERR_BUFFER_FULL) {
+			mfc_err("[NALQ] stream buffer size(%d) isn't enough, skip (Bitrate: %d)\n",
+				pOutStr->StreamSize,
+				MFC_CORE_RAW_READL(MFC_REG_E_RC_BIT_RATE));
+
 			src_mb = mfc_get_del_buf(ctx,&ctx->src_buf_nal_queue, MFC_BUF_NO_TOUCH_USED);
 
 			if (!src_mb)

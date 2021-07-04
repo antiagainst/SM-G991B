@@ -660,6 +660,7 @@ void input_booster_init(void)
 	debug_flag = 0;
 	enable_event_booster = INIT_ZERO;
 	max_resource_count = 0;
+	allowed_res_count = 0;
 	device_count = 0;
 	evdev_mt_slot = 0;
 	trigger_cnt = 0;

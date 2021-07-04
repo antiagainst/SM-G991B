@@ -190,7 +190,6 @@ static int __mfc_init_dec_ctx(struct mfc_ctx *ctx)
 	dec->dpb_table_used = 0;
 	dec->sh_handle_dpb.fd = -1;
 	mutex_init(&dec->dpb_mutex);
-	mutex_init(&ctx->op_mode_mutex);
 
 	mfc_init_dpb_table(ctx);
 
@@ -470,6 +469,7 @@ static int mfc_open(struct file *file)
 	spin_lock_init(&ctx->src_ts.ts_lock);
 	spin_lock_init(&ctx->dst_ts.ts_lock);
 	mutex_init(&ctx->intlock.core_mutex);
+	mutex_init(&ctx->op_mode_mutex);
 	init_waitqueue_head(&ctx->corelock.wq);
 	init_waitqueue_head(&ctx->corelock.migrate_wq);
 

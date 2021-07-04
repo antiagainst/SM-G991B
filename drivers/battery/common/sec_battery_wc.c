@@ -148,7 +148,7 @@ void sec_bat_set_wireless20_current(struct sec_battery_info *battery, int rx_pow
 	battery->wc20_vout = battery->pdata->wireless_power_info[rx_power].vout;
 
 	pr_info("%s: vout=%dmV\n", __func__, battery->wc20_vout);
-	if (battery->wc_status == SEC_WIRELESS_PAD_WPC_HV_20) {
+	if (battery->wc_status == SEC_BATTERY_CABLE_HV_WIRELESS_20) {
 		sec_bat_change_default_current(battery, SEC_BATTERY_CABLE_HV_WIRELESS_20,
 				battery->pdata->wireless_power_info[rx_power].input_current_limit,
 				battery->pdata->wireless_power_info[rx_power].fast_charging_current);
@@ -271,37 +271,10 @@ int sec_bat_choose_cable_type(struct sec_battery_info *battery)
 		pr_info("%s: wr_power(%d), wire_cable_type(%d)\n", __func__, wire_power, current_wire_status);
 	}
 
-	if (battery->wc_status && battery->wc_enable) {
+	if ((battery->wc_status != SEC_BATTERY_CABLE_NONE) && battery->wc_enable) {
 		int temp_current_type;
 
-		if (battery->wc_status == SEC_WIRELESS_PAD_WPC)
-			current_cable_type = SEC_BATTERY_CABLE_WIRELESS;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_WPC_HV)
-			current_cable_type = SEC_BATTERY_CABLE_HV_WIRELESS;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_WPC_PACK)
-			current_cable_type = SEC_BATTERY_CABLE_WIRELESS_PACK;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_WPC_PACK_HV)
-			current_cable_type = SEC_BATTERY_CABLE_WIRELESS_HV_PACK;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_WPC_STAND)
-			current_cable_type = SEC_BATTERY_CABLE_WIRELESS_STAND;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_WPC_STAND_HV)
-			current_cable_type = SEC_BATTERY_CABLE_WIRELESS_HV_STAND;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_VEHICLE)
-			current_cable_type = SEC_BATTERY_CABLE_WIRELESS_VEHICLE;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_VEHICLE_HV)
-			current_cable_type = SEC_BATTERY_CABLE_WIRELESS_HV_VEHICLE;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_PREPARE_HV)
-			current_cable_type = SEC_BATTERY_CABLE_PREPARE_WIRELESS_HV;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_TX)
-			current_cable_type = SEC_BATTERY_CABLE_WIRELESS_TX;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_WPC_PREPARE_HV_20)
-			current_cable_type = SEC_BATTERY_CABLE_PREPARE_WIRELESS_20;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_WPC_HV_20)
-			current_cable_type = SEC_BATTERY_CABLE_HV_WIRELESS_20;
-		else if (battery->wc_status == SEC_WIRELESS_PAD_FAKE)
-			current_cable_type = SEC_BATTERY_CABLE_WIRELESS_FAKE;
-		else
-			current_cable_type = SEC_BATTERY_CABLE_PMA_WIRELESS;
+		current_cable_type = battery->wc_status;
 
 		if (current_cable_type == SEC_BATTERY_CABLE_PREPARE_WIRELESS_HV)
 			temp_current_type = SEC_BATTERY_CABLE_HV_WIRELESS;
@@ -351,7 +324,7 @@ int sec_bat_choose_cable_type(struct sec_battery_info *battery)
 				psy_do_property(battery->pdata->wireless_charger_name, set,
 					POWER_SUPPLY_PROP_CHARGE_EMPTY, val);
 				/* Turn off TX to charge by cable charging having more power */
-				if (battery->wc_status == SEC_WIRELESS_PAD_TX) {
+				if (battery->wc_status == SEC_BATTERY_CABLE_WIRELESS_TX) {
 					pr_info("@Tx_Mode %s: RX device with TA, notify TX device of this info\n",
 							__func__);
 					val.intval = true;
@@ -410,7 +383,7 @@ void sec_bat_get_wireless_current(struct sec_battery_info *battery)
 			battery->auto_mode = true;
 			value.intval = WIRELESS_SLEEP_MODE_ENABLE;
 			psy_do_property(battery->pdata->wireless_charger_name, set,
-					POWER_SUPPLY_EXT_PROP_INPUT_VOLTAGE_REGULATION, value);
+					POWER_SUPPLY_EXT_PROP_WIRELESS_RX_CONTROL, value);
 		}
 	}
 
@@ -506,7 +479,7 @@ void sec_bat_wc_headroom_work_content(struct sec_battery_info *battery)
 
 	/* The default headroom is high, because initial wireless charging state is unstable. */
 	/* After 10sec wireless charging, however, recover headroom level to avoid chipset damage */
-	if (battery->wc_status != SEC_WIRELESS_PAD_NONE) {
+	if (battery->wc_status != SEC_BATTERY_CABLE_NONE) {
 		/* When the capacity is higher than 99, and the device is in 5V wireless charging state, */
 		/* then Vrect headroom has to be headroom_2. */
 		/* Refer to the sec_bat_siop_work function. */
@@ -522,7 +495,7 @@ void sec_bat_wc_headroom_work_content(struct sec_battery_info *battery)
 				value.intval = WIRELESS_VRECT_ADJ_OFF;
 			}
 			psy_do_property(battery->pdata->wireless_charger_name, set,
-				POWER_SUPPLY_EXT_PROP_INPUT_VOLTAGE_REGULATION, value);
+				POWER_SUPPLY_EXT_PROP_WIRELESS_RX_CONTROL, value);
 			pr_info("%s: Changed Vrect adjustment from Rx activation(10seconds)", __func__);
 		}
 		if (is_nv_wireless_type(battery->cable_type))
@@ -1079,13 +1052,13 @@ void sec_bat_wc_cv_mode_check(struct sec_battery_info *battery)
 				POWER_SUPPLY_EXT_PROP_INPUT_VOLTAGE_REGULATION, value);
 			value.intval = WIRELESS_VRECT_ADJ_ROOM_5; // 80mv
 			psy_do_property(battery->pdata->wireless_charger_name, set,
-				POWER_SUPPLY_EXT_PROP_INPUT_VOLTAGE_REGULATION, value);
+				POWER_SUPPLY_EXT_PROP_WIRELESS_RX_CONTROL, value);
 			if ((battery->cable_type == SEC_BATTERY_CABLE_WIRELESS ||
 				battery->cable_type == SEC_BATTERY_CABLE_WIRELESS_STAND ||
 				battery->cable_type == SEC_BATTERY_CABLE_WIRELESS_TX)) {
 				value.intval = WIRELESS_CLAMP_ENABLE;
 				psy_do_property(battery->pdata->wireless_charger_name, set,
-					POWER_SUPPLY_EXT_PROP_INPUT_VOLTAGE_REGULATION, value);
+					POWER_SUPPLY_EXT_PROP_WIRELESS_RX_CONTROL, value);
 			}
 		}
 		/* Change FOD values for CV mode */

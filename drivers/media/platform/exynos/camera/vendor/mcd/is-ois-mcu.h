@@ -96,6 +96,7 @@ struct ois_mcu_dev {
 	atomic_t 		shared_rsc_count;
 	int			current_rsc_count;
 	bool			dev_ctrl_state;
+	bool			need_reset_mcu;
 };
 
 enum is_efs_state {

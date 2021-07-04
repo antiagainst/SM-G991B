@@ -18,6 +18,7 @@
 #include "is-device-sensor-peri.h"
 #include "is-device-sensor.h"
 #include "is-video.h"
+#include "is-ois-mcu.h"
 
 extern struct device *is_dev;
 #ifdef FIXED_SENSOR_DEBUG
@@ -1863,6 +1864,50 @@ static void is_sensor_peri_ctl_dual_sync(struct is_device_sensor *device, bool o
 	}
 }
 
+bool is_sensor_peri_check_mcu_disable_condition(struct is_device_sensor *device)
+{
+	struct is_device_sensor *device_mcu = NULL;
+	struct is_core *core = NULL;
+	struct is_device_sensor_peri *sensor_peri = NULL;
+	struct v4l2_subdev *subdev_module;
+	struct is_module_enum *module;
+	bool ret = false;
+
+	core = (struct is_core *)device->private_data;
+
+	subdev_module = device->subdev_module;
+	if (!subdev_module) {
+		err("subdev_module is NULL");
+		return ret;
+	}
+
+	module = v4l2_get_subdevdata(subdev_module);
+	if (!module) {
+		err("module is NULL");
+		return ret;
+	}
+
+	sensor_peri = (struct is_device_sensor_peri *)module->private_data;
+
+	if ((device->ischain->setfile & IS_SETFILE_MASK) == ISS_SUB_SCENARIO_VIDEO_SUPER_STEADY
+		|| (device->ischain->setfile & IS_SETFILE_MASK) == ISS_SUB_SCENARIO_VIDEO_SUPER_STEADY_WDR_AUTO
+		|| (device->ischain->setfile & IS_SETFILE_MASK) == ISS_SUB_SCENARIO_VIDEO_SUPER_STEADY_WDR_ON) {
+		device_mcu = &core->sensor[0];
+
+		if (device_mcu->mcu->off_during_uwonly_mode) {
+			ret = true;
+			info("[%s] set ois disable condition.", __func__);
+
+			if (!core->mcu->need_reset_mcu) {
+				core->mcu->need_reset_mcu = true;
+				info("[%s] set ois reset flag.", __func__);
+			}
+		}
+	}
+
+	return ret;
+}
+
 int is_sensor_peri_s_stream(struct is_device_sensor *device,
 					bool on)
 {
@@ -1878,6 +1923,7 @@ int is_sensor_peri_s_stream(struct is_device_sensor *device,
 	struct is_device_sensor *device_mcu = NULL;
 	bool skip_sub_device = false;
 	bool skip_sub_device_mcu = false;
+	bool check_mcu_disable = false;
 
 	FIMC_BUG(!device);
 
@@ -1929,13 +1975,13 @@ int is_sensor_peri_s_stream(struct is_device_sensor *device,
 		goto p_err;
 	}
 
+	check_mcu_disable = is_sensor_peri_check_mcu_disable_condition(device);
+
 	if (on) {
-		if (((device->ischain->setfile & IS_SETFILE_MASK) == ISS_SUB_SCENARIO_VIDEO_SUPER_STEADY
-			|| (device->ischain->setfile & IS_SETFILE_MASK) == ISS_SUB_SCENARIO_VIDEO_SUPER_STEADY_WDR_AUTO
-			|| (device->ischain->setfile & IS_SETFILE_MASK) == ISS_SUB_SCENARIO_VIDEO_SUPER_STEADY_WDR_ON) && !sensor_peri->mcu) {
+		if (!sensor_peri->mcu && check_mcu_disable) {
 			device_mcu = &core->sensor[0];
 
-			if (device_mcu->mcu && device_mcu->mcu->off_during_uwonly_mode) {
+			if (device_mcu->mcu) {
 				ret = CALL_OISOPS(device_mcu->mcu->ois, ois_disable, device_mcu->subdev_mcu);
 				if (ret < 0)
 					err("v4l2_subdev_call(ois_disable) is fail(%d)", ret);
@@ -1972,7 +2018,7 @@ int is_sensor_peri_s_stream(struct is_device_sensor *device,
 #endif
 		}
 
-		if (!skip_sub_device_mcu) {
+		if (!skip_sub_device_mcu && !check_mcu_disable) {
 			if (sensor_peri->mcu && sensor_peri->mcu->ois)
 				schedule_work(&sensor_peri->mcu->ois->ois_set_init_work);
 		}
@@ -2002,7 +2048,7 @@ int is_sensor_peri_s_stream(struct is_device_sensor *device,
 			info("[%s] join time X", __func__);
 		}
 
-		if (!skip_sub_device_mcu) {
+		if (!skip_sub_device_mcu && !check_mcu_disable) {
 			info("[%s] mcu join time E", __func__);
 
 			if (sensor_peri->mcu && sensor_peri->mcu->ois)
@@ -2064,7 +2110,7 @@ int is_sensor_peri_s_stream(struct is_device_sensor *device,
 #endif
 		}
 
-		if (!skip_sub_device_mcu) {
+		if (!skip_sub_device_mcu && !check_mcu_disable) {
 			if (sensor_peri->mcu && sensor_peri->mcu->ois)
 				schedule_work(&sensor_peri->mcu->ois->ois_set_deinit_work);
 		}
@@ -2134,7 +2180,7 @@ int is_sensor_peri_s_stream(struct is_device_sensor *device,
 			info("[%s] join time X", __func__);
 		}
 
-		if (!skip_sub_device_mcu) {
+		if (!skip_sub_device_mcu && !check_mcu_disable) {
 			info("[%s] mcu join time E", __func__);
 
 			if (sensor_peri->mcu && sensor_peri->mcu->ois)

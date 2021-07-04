@@ -357,6 +357,9 @@ DHDCFLAGS += -DWL_6G_BAND
 # ASSOC_TIMEOUT increased to 2 seconds due to IOT issue
 DHDCFLAGS += -DCUSTOM_ASSOC_TIMEOUT=20
 
+# Required for scanning the non-continue channel
+DHDCFLAGS += -DWFC_NON_CONT_CHAN
+
 # Change Dump path by Android Global DE Policy
 ifeq ($(CONFIG_WLAN_VENDOR_DUMP_ENABLE),y)
        DHDCFLAGS += -DDHD_COMMON_DUMP_PATH="\"/data/vendor/log/wifi/\""

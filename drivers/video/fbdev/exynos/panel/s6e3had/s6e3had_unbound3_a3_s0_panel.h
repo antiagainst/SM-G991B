@@ -714,6 +714,13 @@ static u8 unbound3_a3_s0_vddm_table[][1] = {
 	{0x01}, // VDDM LV
 	{0x02}, // VDDM HV
 };
+
+static u8 unbound3_a3_s0_vddm_2_table[][1] = {
+	{0x00}, // VDDM ORIGINAL
+	{0x07}, // VDDM LV
+	{0x28}, // VDDM HV
+};
+
 static u8 unbound3_a3_s0_gram_img_pattern_table[][1] = {
 	{0x00}, // GCT_PATTERN_NONE
 	{0x07}, // GCT_PATTERN_1
@@ -976,6 +983,7 @@ static struct maptbl unbound3_a3_s0_maptbl[MAX_MAPTBL] = {
 #endif
 #ifdef CONFIG_SUPPORT_GRAM_CHECKSUM
 	[VDDM_MAPTBL] = DEFINE_2D_MAPTBL(unbound3_a3_s0_vddm_table, init_common_table, s6e3had_getidx_vddm_table, copy_common_maptbl),
+	[VDDM_2_MAPTBL] = DEFINE_2D_MAPTBL(unbound3_a3_s0_vddm_2_table, init_common_table, s6e3had_getidx_vddm_table, copy_common_maptbl),
 	[GRAM_IMG_MAPTBL] = DEFINE_2D_MAPTBL(unbound3_a3_s0_gram_img_pattern_table, init_common_table, s6e3had_getidx_gram_img_pattern_table, copy_common_maptbl),
 	[GRAM_INV_IMG_MAPTBL] = DEFINE_2D_MAPTBL(unbound3_a3_s0_gram_inv_img_pattern_table, init_common_table, s6e3had_getidx_gram_img_pattern_table, copy_common_maptbl),
 #endif
@@ -1365,7 +1373,11 @@ static u8 UNBOUND3_A3_S0_DYNAMIC_HLPM_DISABLE[] = {
 
 #ifdef CONFIG_SUPPORT_GRAM_CHECKSUM
 static u8 UNBOUND3_A3_S0_VDDM_ORIG[] = { 0xD7, 0x00 };
+static u8 UNBOUND3_A3_S0_VDDM_ORIG_2[] = { 0xF4, 0x00 };
 static u8 UNBOUND3_A3_S0_VDDM_VOLT[] = { 0xD7, 0x00 };
+static u8 UNBOUND3_A3_S0_VDDM_VOLT_2[] = { 0xF4, 0x00 };
+static u8 UNBOUND3_A3_S0_VDDM_SET_1[] = { 0xFE, 0xB0 };
+static u8 UNBOUND3_A3_S0_VDDM_SET_2[] = { 0xFE, 0x30 };
 static u8 UNBOUND3_A3_S0_VDDM_INIT[] = { 0xFE, 0x14 };
 static u8 UNBOUND3_A3_S0_HOP_CHKSUM_ON[] = { 0xFE, 0x7A };
 static u8 UNBOUND3_A3_S0_GRAM_CHKSUM_START[] = { 0x2C, 0x00 };
@@ -1605,8 +1617,13 @@ static DEFINE_STATIC_PACKET(unbound3_a3_s0_sw_reset, DSI_PKT_TYPE_WR, UNBOUND3_A
 static DEFINE_STATIC_PACKET(unbound3_a3_s0_gct_dsc, DSI_PKT_TYPE_WR, UNBOUND3_A3_S0_GCT_DSC, 0);
 static DEFINE_STATIC_PACKET(unbound3_a3_s0_gct_pps, DSI_PKT_TYPE_WR, UNBOUND3_A3_S0_GCT_PPS, 0);
 static DEFINE_STATIC_PACKET(unbound3_a3_s0_vddm_orig, DSI_PKT_TYPE_WR, UNBOUND3_A3_S0_VDDM_ORIG, 0x03);
+static DEFINE_STATIC_PACKET(unbound3_a3_s0_vddm_orig_2, DSI_PKT_TYPE_WR, UNBOUND3_A3_S0_VDDM_ORIG_2, 0x10);
 static DEFINE_PKTUI(unbound3_a3_s0_vddm_volt, &unbound3_a3_s0_maptbl[VDDM_MAPTBL], 1);
 static DEFINE_VARIABLE_PACKET(unbound3_a3_s0_vddm_volt, DSI_PKT_TYPE_WR, UNBOUND3_A3_S0_VDDM_VOLT, 0x03);
+static DEFINE_PKTUI(unbound3_a3_s0_vddm_volt_2, &unbound3_a3_s0_maptbl[VDDM_2_MAPTBL], 1);
+static DEFINE_VARIABLE_PACKET(unbound3_a3_s0_vddm_volt_2, DSI_PKT_TYPE_WR, UNBOUND3_A3_S0_VDDM_VOLT_2, 0x10);
+static DEFINE_STATIC_PACKET(unbound3_a3_s0_vddm_set_1, DSI_PKT_TYPE_WR, UNBOUND3_A3_S0_VDDM_SET_1, 0);
+static DEFINE_STATIC_PACKET(unbound3_a3_s0_vddm_set_2, DSI_PKT_TYPE_WR, UNBOUND3_A3_S0_VDDM_SET_2, 0);
 static DEFINE_STATIC_PACKET(unbound3_a3_s0_vddm_init, DSI_PKT_TYPE_WR, UNBOUND3_A3_S0_VDDM_INIT, 0x0B);
 static DEFINE_STATIC_PACKET(unbound3_a3_s0_hop_chksum_on, DSI_PKT_TYPE_WR, UNBOUND3_A3_S0_HOP_CHKSUM_ON, 0x27);
 
@@ -2693,10 +2710,14 @@ static void *unbound3_a3_s0_gct_vddm_cmdtbl[] = {
 	&KEYINFO(unbound3_a3_s0_level2_key_enable),
 	&KEYINFO(unbound3_a3_s0_level3_key_enable),
 	&PKTINFO(unbound3_a3_s0_vddm_volt),
+	&DLYINFO(unbound3_a3_s0_wait_vddm_update),
+	&PKTINFO(unbound3_a3_s0_vddm_volt_2),
+	&PKTINFO(unbound3_a3_s0_vddm_set_1),
+	&PKTINFO(unbound3_a3_s0_vddm_set_2),
+	&DLYINFO(unbound3_a3_s0_wait_vddm_update),
 	&KEYINFO(unbound3_a3_s0_level3_key_disable),
 	&KEYINFO(unbound3_a3_s0_level2_key_disable),
 	&KEYINFO(unbound3_a3_s0_level1_key_disable),
-	&DLYINFO(unbound3_a3_s0_wait_vddm_update),
 };
 
 static void *unbound3_a3_s0_gct_img_0_update_cmdtbl[] = {
@@ -2736,6 +2757,9 @@ static void *unbound3_a3_s0_gct_exit_cmdtbl[] = {
 	&KEYINFO(unbound3_a3_s0_level2_key_enable),
 	&KEYINFO(unbound3_a3_s0_level3_key_enable),
 	&PKTINFO(unbound3_a3_s0_vddm_orig),
+	&PKTINFO(unbound3_a3_s0_vddm_orig_2),
+	&PKTINFO(unbound3_a3_s0_vddm_set_1),
+	&PKTINFO(unbound3_a3_s0_vddm_set_2),
 	&KEYINFO(unbound3_a3_s0_level3_key_disable),
 	&KEYINFO(unbound3_a3_s0_level2_key_disable),
 	&KEYINFO(unbound3_a3_s0_level1_key_disable),

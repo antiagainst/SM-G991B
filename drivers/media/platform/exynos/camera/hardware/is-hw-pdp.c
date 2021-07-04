@@ -1372,6 +1372,15 @@ static int is_hw_pdp_init(struct is_hw_ip *hw_ip, u32 instance,
 				return ret;
 			}
 		}
+
+		subdev = &device->pdaf;
+		if (!test_bit(IS_SUBDEV_OPEN, &subdev->state)) {
+			ret = is_subdev_internal_open(device, IS_DEVICE_ISCHAIN, subdev);
+			if (ret) {
+				merr("is_subdev_internal_open is fail(%d)", device, ret);
+				return ret;
+			}
+		}
 	}
 
 	set_bit(HW_INIT, &hw_ip->state);
@@ -1415,6 +1424,13 @@ static int is_hw_pdp_deinit(struct is_hw_ip *hw_ip, u32 instance)
 			if (ret)
 				merr("subdev internal stop is fail(%d)", device, ret);
 
+			ret = is_subdev_internal_close(device, IS_DEVICE_ISCHAIN, subdev);
+			if (ret)
+				merr("is_subdev_internal_close is fail(%d)", device, ret);
+		}
+
+		subdev = &device->pdaf;
+		if (test_bit(IS_SUBDEV_INTERNAL_USE, &subdev->state)) {
 			ret = is_subdev_internal_close(device, IS_DEVICE_ISCHAIN, subdev);
 			if (ret)
 				merr("is_subdev_internal_close is fail(%d)", device, ret);

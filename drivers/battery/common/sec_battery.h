@@ -1033,10 +1033,9 @@ struct sec_battery_info {
 	bool skip_chg_temp_check;
 	bool skip_wpc_temp_check;
 	bool wpc_temp_mode;
-	bool charging_block;
 	bool wpc_vout_ctrl_lcd_on;
 	char *hv_chg_name;
-#if IS_ENABLED(CONFIG_WIRELESS_CHARGER_MFC)
+#if IS_ENABLED(CONFIG_WIRELESS_CHARGING)
 	int tx_avg_curr;
 	int tx_time_cnt;
 	int tx_total_power;
@@ -1188,7 +1187,7 @@ extern void sec_bat_change_default_current(struct sec_battery_info *battery, int
 extern void sec_bat_change_pdo(struct sec_battery_info *battery, int vol);
 extern int sec_bat_set_charge(void *data, int chg_mode);
 
-#if IS_ENABLED(CONFIG_WIRELESS_CHARGER_MFC)
+#if IS_ENABLED(CONFIG_WIRELESS_CHARGING)
 extern void sec_bat_get_wireless_current(struct sec_battery_info *battery);
 extern void sec_bat_mfc_work(struct work_struct *work);
 extern int sec_bat_check_wc_available(struct sec_battery_info *battery);

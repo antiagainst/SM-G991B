@@ -1481,6 +1481,10 @@ int sensor_hm3_cis_mode_change(struct v4l2_subdev *subdev, u32 mode)
 		cis->cis_data->cur_12bit_mode = SENSOR_12BIT_STATE_OFF;
 	}
 
+	cis->cis_data->pre_lownoise_mode = IS_CIS_LNOFF;
+	cis->cis_data->cur_lownoise_mode = IS_CIS_LNOFF;
+	sensor_hm3_cis_set_lownoise_mode_change(subdev);
+
 p_err_i2c_unlock:
 	I2C_MUTEX_UNLOCK(cis->i2c_lock);
 
@@ -1552,7 +1556,7 @@ int sensor_hm3_cis_set_lownoise_mode_change(struct v4l2_subdev *subdev)
 			fast_change_idx = 0x0105;
 			break;
 		default:
-			err("not support mode(%d)\n", __func__, mode);
+			err("not support mode(%d)\n", mode);
 			break;
 		}
 		break;
@@ -1602,7 +1606,7 @@ int sensor_hm3_cis_set_lownoise_mode_change(struct v4l2_subdev *subdev)
 			fast_change_idx = 0x0103;
 			break;
 		default:
-			err("not support mode(%d)\n", __func__, mode);
+			err("not support mode(%d)\n", mode);
 			break;
 		}
 		break;
@@ -1696,12 +1700,12 @@ int sensor_hm3_cis_set_iDCG_mode_change(struct v4l2_subdev *subdev)
 			fast_change_idx = 0x0102;
 			break;
 		default:
-			err("not support mode(%d)\n", __func__, mode);
+			err("not support mode(%d)\n", mode);
 			break;
 		}
 		break;
 	default:
-		err("not support 12bit mode(%d)\n", __func__, cis->cis_data->cur_12bit_mode);
+		err("not support 12bit mode(%d)\n", cis->cis_data->cur_12bit_mode);
 	}
 
 	if (fast_change_idx != 0x00FF) {
@@ -2107,7 +2111,7 @@ int sensor_hm3_cis_wait_streamon(struct v4l2_subdev *subdev)
 		for (retry_count = 0; retry_count < max_retry_count; retry_count++) {
 			ret = sensor_cis_wait_streamon(subdev);
 			if (ret < 0) {
-				err("[%s] wait failed retry %d", __func__, retry_count);
+				err("wait failed retry %d", retry_count);
 			} else {
 				break;
 			}
@@ -2385,8 +2389,7 @@ int sensor_hm3_cis_set_exposure_time(struct v4l2_subdev *subdev, struct ae_param
 	sensor_hm3_target_exp_backup.long_val = target_exposure->long_val;
 
 	if ((target_exposure->long_val <= 0) || (target_exposure->short_val <= 0)) {
-		err("[%s] invalid target exposure(%d, %d)\n", __func__,
-				target_exposure->long_val, target_exposure->short_val);
+		err("invalid target exposure(%d, %d)\n", target_exposure->long_val, target_exposure->short_val);
 		ret = -EINVAL;
 		goto p_err;
 	}
@@ -2835,14 +2838,14 @@ int sensor_hm3_cis_set_frame_rate(struct v4l2_subdev *subdev, u32 min_fps)
 	cis_data = cis->cis_data;
 
 	if (min_fps > cis_data->max_fps) {
-		err("[MOD:D:%d] %s, request FPS is too high(%d), set to max(%d)\n",
-			cis->id, __func__, min_fps, cis_data->max_fps);
+		err("[MOD:D:%d] request FPS is too high(%d), set to max(%d)\n",
+			cis->id, min_fps, cis_data->max_fps);
 		min_fps = cis_data->max_fps;
 	}
 
 	if (min_fps == 0) {
-		err("[MOD:D:%d] %s, request FPS is 0, set to min FPS(1)\n",
-			cis->id, __func__);
+		err("[MOD:D:%d] request FPS is 0, set to min FPS(1)\n",
+			cis->id);
 		min_fps = 1;
 	}
 
@@ -2853,8 +2856,8 @@ int sensor_hm3_cis_set_frame_rate(struct v4l2_subdev *subdev, u32 min_fps)
 
 	ret = sensor_hm3_cis_set_frame_duration(subdev, frame_duration);
 	if (ret < 0) {
-		err("[MOD:D:%d] %s, set frame duration is fail(%d)\n",
-			cis->id, __func__, ret);
+		err("[MOD:D:%d] set frame duration is fail(%d)\n",
+			cis->id, ret);
 		goto p_err;
 	}
 
@@ -3522,7 +3525,7 @@ int sensor_hm3_cis_compensate_gain_for_extremely_br(struct v4l2_subdev *subdev, 
 	min_fine_int = cis_data->min_fine_integration_time;
 
 	if (line_length_pck <= 0) {
-		err("[%s] invalid line_length_pck(%d)\n", __func__, line_length_pck);
+		err("invalid line_length_pck(%d)\n", line_length_pck);
 		goto p_err;
 	}
 
@@ -3944,7 +3947,7 @@ static int cis_hm3_probe(struct i2c_client *client,
 		sensor_hm3_load_sram_size = sensor_hm3_setfile_A_sizes_load_sram;
 #endif
 	} else {
-		err("%s setfile index out of bound, take default (setfile_A)", __func__);
+		err("setfile index out of bound, take default (setfile_A)");
 		sensor_hm3_global = sensor_hm3_setfile_A_Global;
 		sensor_hm3_global_size = ARRAY_SIZE(sensor_hm3_setfile_A_Global);
 		sensor_hm3_setfiles = sensor_hm3_setfiles_A;

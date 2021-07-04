@@ -1912,41 +1912,6 @@ int is_hw_ischain_cfg(void *ischain_data)
 	return ret;
 }
 
-static void is_hw_ischain_set_wdma_mux(void)
-{
-	int i;
-	struct is_core *core;
-	struct is_device_sensor *all_sensor;
-	struct is_device_sensor *each_sensor;
-	struct is_device_csi *csi;
-
-	core = (struct is_core *)dev_get_drvdata(is_dev);
-	all_sensor = is_get_sensor_device(core);
-	for (i = 0; i < IS_SENSOR_COUNT; i++) {
-		each_sensor = &all_sensor[i];
-
-		if (!test_bit(IS_SENSOR_PROBE, &each_sensor->state))
-			continue;
-
-		if (!each_sensor->subdev_csi)
-			continue;
-
-		csi = v4l2_get_subdevdata(each_sensor->subdev_csi);
-		if (csi && csi->mux_reg[csi->scm]) {
-			u32 mux_val;
-
-			/* FIXME: It should use dt data. */
-			mux_val = csi->ch;
-
-			writel(mux_val, csi->mux_reg[0]);
-
-			minfo("[CSI%d] input(%d) --> WDMA ch(%d)\n", csi, csi->ch,
-				mux_val, each_sensor->ssvc0.dma_ch[0]);
-		}
-	}
-	is_put_sensor_device(core);
-}
-
 int is_hw_ischain_enable(struct is_device_ischain *device)
 {
 	int ret = 0;
@@ -2023,8 +1988,6 @@ int is_hw_ischain_enable(struct is_device_ischain *device)
 	is_set_affinity_irq(itf_hwip->irq[INTR_HWIP1], true);
 
 	votfitf_disable_service();
-
-	is_hw_ischain_set_wdma_mux();
 
 	info("%s: complete\n", __func__);
 
@@ -2283,10 +2246,8 @@ void is_hw_configure_bts_scen(struct is_resourcemgr *resourcemgr, int scenario_i
 	int bts_index = 0;
 
 	switch (scenario_id) {
-	case IS_DVFS_SN_REAR_SINGLE_ULTRAWIDE_VIDEO_FHD120:
 	case IS_DVFS_SN_REAR_SINGLE_TELE_VIDEO_8K24:
 	case IS_DVFS_SN_REAR_SINGLE_TELE_VIDEO_8K30:
-	case IS_DVFS_SN_REAR_SINGLE_WIDE_VIDEO_FHD120:
 	case IS_DVFS_SN_REAR_SINGLE_WIDE_VIDEO_8K24:
 	case IS_DVFS_SN_REAR_SINGLE_WIDE_VIDEO_8K30:
 	case IS_DVFS_SN_TRIPLE_PHOTO:

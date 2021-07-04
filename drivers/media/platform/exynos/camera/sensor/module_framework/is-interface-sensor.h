@@ -877,6 +877,8 @@ struct is_ois_ops {
 	int (*ois_set_af_position)(struct v4l2_subdev *subdev, u32 position);
 	void (*ois_get_hall_pos)(struct is_core *core, u16 *targetPos, u16 *hallPos);
 	int (*ois_check_cross_talk)(struct v4l2_subdev *subdev, u16 *hall_data);
+	int (*ois_check_hall_cal)(struct v4l2_subdev *subdev, u16 *hall_cal_data);
+	void (*ois_check_valid)(struct v4l2_subdev *subdev, u8 *value);
 #ifdef USE_OIS_HALL_DATA_FOR_VDIS
 	int (*ois_get_hall_data)(struct v4l2_subdev *subdev, struct is_ois_hall_data *halldata);
 #endif

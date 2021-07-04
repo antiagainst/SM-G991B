@@ -182,6 +182,86 @@ static int max77705_vib_get_motor_type(struct device *dev, char *buf)
 	return ret;
 }
 
+#if defined(CONFIG_SEC_VIBRATOR)
+static bool max77705_get_calibration(struct device *dev)
+{
+	struct max77705_vibrator_drvdata *ddata = dev_get_drvdata(dev);
+	struct max77705_vibrator_pdata *pdata = ddata->pdata;
+
+	return pdata->calibration;
+}
+
+static int max77705_get_step_size(struct device *dev, int *step_size)
+{
+	struct max77705_vibrator_drvdata *ddata = dev_get_drvdata(dev);
+	struct max77705_vibrator_pdata *pdata = ddata->pdata;
+
+	pr_info("%s step_size=%d\n", __func__, pdata->steps);
+
+	if (pdata->steps == 0)
+		return -ENODATA;
+
+	*step_size = pdata->steps;
+
+	return 0;
+}
+
+
+static int max77705_get_intensities(struct device *dev, int *buf)
+{
+	struct max77705_vibrator_drvdata *ddata = dev_get_drvdata(dev);
+	struct max77705_vibrator_pdata *pdata = ddata->pdata;
+	int i;
+
+	if (pdata->intensities[1] == 0)
+		return -ENODATA;
+
+	for (i = 0; i < pdata->steps; i++)
+		buf[i] = pdata->intensities[i];
+
+	return 0;
+}
+
+static int max77705_set_intensities(struct device *dev, int *buf)
+{
+	struct max77705_vibrator_drvdata *ddata = dev_get_drvdata(dev);
+	struct max77705_vibrator_pdata *pdata = ddata->pdata;
+	int i;
+
+	for (i = 0; i < pdata->steps; i++)
+		pdata->intensities[i] = buf[i];
+
+	return 0;
+}
+
+static int max77705_get_haptic_intensities(struct device *dev, int *buf)
+{
+	struct max77705_vibrator_drvdata *ddata = dev_get_drvdata(dev);
+	struct max77705_vibrator_pdata *pdata = ddata->pdata;
+	int i;
+
+	if (pdata->haptic_intensities[1] == 0)
+		return -ENODATA;
+
+	for (i = 0; i < pdata->steps; i++)
+		buf[i] = pdata->haptic_intensities[i];
+
+	return 0;
+}
+
+static int max77705_set_haptic_intensities(struct device *dev, int *buf)
+{
+	struct max77705_vibrator_drvdata *ddata = dev_get_drvdata(dev);
+	struct max77705_vibrator_pdata *pdata = ddata->pdata;
+	int i;
+
+	for (i = 0; i < pdata->steps; i++)
+		pdata->haptic_intensities[i] = buf[i];
+
+	return 0;
+}
+#endif /* if defined(CONFIG_SEC_VIBRATOR) */
+
 static const struct sec_vibrator_ops max77705_multi_freq_vib_ops = {
 	.enable = max77705_vibrator_enable,
 	.set_intensity = max77705_vib_set_intensity,
@@ -190,6 +270,14 @@ static const struct sec_vibrator_ops max77705_multi_freq_vib_ops = {
 	.set_force_touch_intensity = max77705_vib_set_intensity,
 	.get_motor_type = max77705_vib_get_motor_type,
 	.set_tuning_with_temp = max77705_vib_set_ratio_with_temp,
+#if defined(CONFIG_SEC_VIBRATOR)
+	.get_calibration = max77705_get_calibration,
+	.get_step_size = max77705_get_step_size,
+	.get_intensities = max77705_get_intensities,
+	.set_intensities = max77705_set_intensities,
+	.get_haptic_intensities = max77705_get_haptic_intensities,
+	.set_haptic_intensities = max77705_set_haptic_intensities,
+#endif
 };
 
 static const struct sec_vibrator_ops max77705_single_freq_vib_ops = {
@@ -197,7 +285,98 @@ static const struct sec_vibrator_ops max77705_single_freq_vib_ops = {
 	.set_intensity = max77705_vib_set_intensity,
 	.get_motor_type = max77705_vib_get_motor_type,
 	.set_tuning_with_temp = max77705_vib_set_ratio_with_temp,
+#if defined(CONFIG_SEC_VIBRATOR)
+	.get_calibration = max77705_get_calibration,
+	.get_step_size = max77705_get_step_size,
+	.get_intensities = max77705_get_intensities,
+	.set_intensities = max77705_set_intensities,
+	.get_haptic_intensities = max77705_get_haptic_intensities,
+	.set_haptic_intensities = max77705_set_haptic_intensities,
+#endif
 };
+
+#if defined(CONFIG_SEC_VIBRATOR)
+static int of_sec_vibrator_dt(struct max77705_vibrator_pdata *pdata, struct device_node *np)
+{
+	int ret = 0;
+	int i;
+	unsigned int val = 0;
+	int *intensities = NULL;
+
+	pr_info("%s\n", __func__);
+	pdata->calibration = false;
+
+	/* number of steps */
+	ret = of_property_read_u32(np, "samsung,steps", &val);
+	if (ret) {
+		pr_err("%s out of range(%d)\n", __func__, val);
+		return -EINVAL;
+	}
+	pdata->steps = (int)val;
+
+	/* allocate memory for intensities */
+	pdata->intensities = kmalloc_array(pdata->steps, sizeof(int), GFP_KERNEL);
+	if (!pdata->intensities)
+		return -ENOMEM;
+	intensities = pdata->intensities;
+
+	/* intensities */
+	ret = of_property_read_u32_array(np, "samsung,intensities", intensities, pdata->steps);
+	if (ret) {
+		pr_err("intensities are not specified\n");
+		ret = -EINVAL;
+		goto err_getting_int;
+	}
+
+	for (i = 0; i < pdata->steps; i++) {
+		if ((intensities[i] < 0) || (intensities[i] > MAX_INTENSITY)) {
+			pr_err("%s out of range(%d)\n", __func__, intensities[i]);
+			ret = -EINVAL;
+			goto err_getting_int;
+		}
+	}
+	intensities = NULL;
+
+	/* allocate memory for haptic_intensities */
+	pdata->haptic_intensities = kmalloc_array(pdata->steps, sizeof(int), GFP_KERNEL);
+	if (!pdata->haptic_intensities) {
+		ret = -ENOMEM;
+		goto err_alloc_haptic;
+	}
+	intensities = pdata->haptic_intensities;
+
+	/* haptic intensities */
+	ret = of_property_read_u32_array(np, "samsung,haptic_intensities", intensities, pdata->steps);
+	if (ret) {
+		pr_err("haptic_intensities are not specified\n");
+		ret = -EINVAL;
+		goto err_haptic;
+	}
+	for (i = 0; i < pdata->steps; i++) {
+		if ((intensities[i] < 0) || (intensities[i] > MAX_INTENSITY)) {
+			pr_err("%s out of range(%d)\n", __func__, intensities[i]);
+			ret = -EINVAL;
+			goto err_haptic;
+		}
+	}
+
+	/* update calibration statue */
+	pdata->calibration = true;
+
+	return ret;
+
+err_haptic:
+	kfree(pdata->haptic_intensities);
+err_alloc_haptic:
+	pdata->haptic_intensities = NULL;
+err_getting_int:
+	kfree(pdata->intensities);
+	pdata->intensities = NULL;
+	pdata->steps = 0;
+
+	return ret;
+}
+#endif /* if defined(CONFIG_SEC_VIBRATOR) */
 
 #if defined(CONFIG_OF)
 static struct max77705_vibrator_pdata *of_max77705_vibrator_dt(
@@ -304,6 +483,13 @@ static struct max77705_vibrator_pdata *of_max77705_vibrator_dt(
 	} else {
 		pr_info("frequency: %d.%dHz\n", pdata->freq/10, pdata->freq%10);
 	}
+
+#if defined(CONFIG_SEC_VIBRATOR)
+	ret = of_sec_vibrator_dt(pdata, np);
+	if (ret < 0)
+		pr_err("sec_vibrator dt read fail\n");
+#endif
+
 	pr_info("normal_ratio: %d\n", pdata->normal_ratio);
 	pr_info("overdrive_ratio: %d\n", pdata->overdrive_ratio);
 	pr_info("high temperature reference: %d\n", pdata->high_temp_ref);

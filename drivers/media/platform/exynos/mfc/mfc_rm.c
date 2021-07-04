@@ -214,7 +214,11 @@ static int __mfc_rm_move_core_running(struct mfc_ctx *ctx, int to_core_num, int 
 		return -EAGAIN;
 	}
 
-	mfc_get_corelock_migrate(ctx);
+	ret = mfc_get_corelock_migrate(ctx);
+	if (ret < 0) {
+		mfc_ctx_err("[RMLB] failed to get corelock\n");
+		return -EAGAIN;
+	}
 
 	/* 1. Change state on from_core */
 	ret = mfc_core_get_hwlock_dev(from_core);
@@ -1076,6 +1080,12 @@ void mfc_rm_load_balancing(struct mfc_ctx *ctx, int load_add)
 
 	if (!ctx->src_ts.ts_is_full && load_add == MFC_RM_LOAD_ADD) {
 		mfc_debug(2, "[RMLB] instance load is not yet fixed\n");
+		spin_unlock_irqrestore(&dev->ctx_list_lock, flags);
+		return;
+	}
+
+	if (ctx->boosting_time && load_add == MFC_RM_LOAD_ADD) {
+		mfc_debug(2, "[RMLB] instance is boosting\n");
 		spin_unlock_irqrestore(&dev->ctx_list_lock, flags);
 		return;
 	}

@@ -2383,7 +2383,7 @@ static void copy_mafpc_enable_maptbl(struct maptbl *tbl, u8 *dst)
 
 		/* default 0x20, refer abc op guide */
 		dst[S6E3HAD_MAFPC_VBP_REG] = 0x20;
-		if (panel_data->id[3] < 0xE2)
+		if (panel_data->id[2] < 0xE2)
 			dst[S6E3HAD_MAFPC_VBP_REG] = 0x1F;
 
 		if (mafpc->written & MAFPC_UPDATED_FROM_SVC)

@@ -59,16 +59,14 @@ bool sec_bat_check_step_charging(struct sec_battery_info *battery)
 	if (!battery->step_chg_en_in_factory)
 		return false;
 #endif
-
+	if (!battery->step_chg_type)
+		return false;
 #if defined(CONFIG_ENG_BATTERY_CONCEPT)
 	if (battery->test_charge_current)
 		return false;
 	if (battery->test_step_condition <= 4500)
 		battery->pdata->step_chg_cond[0][0] = battery->test_step_condition;
 #endif
-
-	if (!battery->step_chg_type)
-		return false;
 
 	if (battery->siop_level < 100 || battery->lcd_status)
 		lcd_status = 1;

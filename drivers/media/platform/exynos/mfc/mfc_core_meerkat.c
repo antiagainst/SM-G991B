@@ -25,7 +25,7 @@
 #include "mfc_sync.h"
 #include "mfc_queue.h"
 
-#define MFC_SFR_AREA_COUNT	22
+#define MFC_SFR_AREA_COUNT	23
 #define MFC1_SFR_AREA_COUNT	4
 static void __mfc_dump_regs(struct mfc_core *core)
 {
@@ -51,6 +51,7 @@ static void __mfc_dump_regs(struct mfc_core *core)
 		{ 0x7300, 0xFC },
 		{ 0x8000, 0x20C },
 		{ 0x9000, 0x10C },
+		{ 0x9A00, 0x200 },
 		{ 0xA000, 0x500 },
 		{ 0xB000, 0x444 },
 		{ 0xC000, 0x84 },
@@ -58,7 +59,7 @@ static void __mfc_dump_regs(struct mfc_core *core)
 	int addr1[MFC1_SFR_AREA_COUNT][2] = {
 		{ 0x3A00, 0x5CC },
 		{ 0x6200, 0x188 },
-		{ 0x9A00, 0x3F8 },
+		{ 0x9A00, 0x200 },
 		{ 0xA500, 0x6C },
 	};
 

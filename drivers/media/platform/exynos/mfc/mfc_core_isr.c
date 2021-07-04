@@ -1381,8 +1381,10 @@ static inline int __mfc_handle_done_frame(struct mfc_core *core,
 			enc->buf_full = 0;
 			enc->in_slice = 1;
 		} else if (reason == MFC_REG_R2H_CMD_ENC_BUFFER_FULL_RET) {
-			mfc_err("stream buffer size(%d) isn't enough\n",
-					mfc_core_get_enc_strm_size());
+			mfc_err("stream buffer size(%d) isn't enough, (Bitrate: %d)\n",
+				mfc_core_get_enc_strm_size(),
+				MFC_CORE_RAW_READL(MFC_REG_E_RC_BIT_RATE));
+
 			core->preempt_core_ctx = ctx->num;
 			enc->buf_full = 1;
 			enc->in_slice = 0;

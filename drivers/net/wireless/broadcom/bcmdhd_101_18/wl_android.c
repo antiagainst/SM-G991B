@@ -10418,7 +10418,7 @@ exit:
 		*/
 		if (
 #ifdef WL_TWT
-			!((ret == BCME_BUSY) &&
+			!(((ret == -EBUSY) || (ret == -EOPNOTSUPP)) &&
 			((strnicmp(command, CMD_TWT_SETUP, strlen(CMD_TWT_SETUP)) == 0) ||
 			(strnicmp(command, CMD_TWT_TEARDOWN, strlen(CMD_TWT_TEARDOWN)) == 0) ||
 			(strnicmp(command, CMD_TWT_INFO, strlen(CMD_TWT_INFO)) == 0))) &&
@@ -10603,6 +10603,7 @@ _wl_android_bcnrecv_start(struct bcm_cfg80211 *cfg, struct net_device *ndev, boo
 {
 	s32 err = BCME_OK;
 	struct net_device *pdev = bcmcfg_to_prmry_ndev(cfg);
+	dhd_pub_t *dhd = cfg->pub;
 
 	/* check any scan is in progress before beacon recv scan trigger IOVAR */
 	if (wl_get_drv_status_all(cfg, SCANNING)) {
@@ -10643,6 +10644,17 @@ _wl_android_bcnrecv_start(struct bcm_cfg80211 *cfg, struct net_device *ndev, boo
 		goto exit;
 	}
 #endif /* WL_NAN */
+
+	if (dhd->early_suspended) {
+		/* Set BEACON_RECV in suspend mode */
+		WL_INFORM_MEM(("Already suspend mode, Aborting beacon recv start\n"));
+		cfg->bcnrecv_info.bcnrecv_state = BEACON_RECV_SUSPENDED;
+		if ((err = wl_android_bcnrecv_event(pdev, BCNRECV_ATTR_STATUS,
+			WL_BCNRECV_SUSPENDED, WL_BCNRECV_SUSPEND, NULL, 0)) != BCME_OK) {
+			WL_ERR(("failed to send bcnrecv event, error:%d\n", err));
+		}
+		goto exit;
+	}
 
 	/* Triggering an sendup_bcn iovar */
 	err = wldev_iovar_setint(pdev, "sendup_bcn", 1);
@@ -11386,6 +11398,71 @@ exit :
 
 #ifdef WL_TWT
 static int
+wl_android_twt_bcmerr_to_kernel_err(int bcm_err)
+{
+	int ret = 0;
+
+	switch (bcm_err) {
+		case BCME_OK:
+			ret = 0;
+			break;
+		case BCME_ERROR:
+			ret = -EAGAIN;
+			break;
+		case BCME_BADARG: /* Bad Argument */
+			ret = -EINVAL;
+			break;
+		case BCME_RANGE: /* TWT parameter value provided is not in allowed range */
+			ret = -ERANGE;
+			break;
+		case BCME_BUSY:
+			/* Busy
+			* 1. STA is in off-channel/Scan in progress
+			* 2. STA is in allTWT Suspend mode
+			* 3. Other TWT Action frame transmission is not completed yet
+			*/
+			ret = -EBUSY;
+			break;
+		case BCME_NOTASSOCIATED: /* STA Not Associated */
+			ret = -ENOTCONN;
+			break;
+		case BCME_EPERM: /* Not Permitted because of
+			* 1. More than one TWT
+			* 2. More than one concurrent connection is active.
+			* 3. BT is active
+			*/
+			ret = -EPERM;
+			break;
+		case BCME_NOTFOUND: /* Not Found. Peer not found for given mac address */
+		case BCME_NORESOURCE: /* Not Enough resources to establish new TWT session */
+			ret = -ENODEV;
+			break;
+		case BCME_NOMEM:
+			ret = -ENOMEM;
+			break;
+		case BCME_UNSUPPORTED: /* Unsupported.
+			* 1. No TWT support
+			* 2. TWT capabilities is not set by device or peer device
+			*/
+			ret = -EOPNOTSUPP;
+			break;
+		case BCME_VERSION:
+			ret = -ENOEXEC;
+			break;
+		case BCME_BUFTOOSHORT:
+			ret = -ENOBUFS;
+			break;
+		default:
+			ret = -EAGAIN;
+			break;
+	}
+
+	WL_DBG(("twt wifi_error ret:%d\n", ret));
+
+	return ret;
+}
+
+static int
 wl_android_twt_setup(struct net_device *ndev, char *command, int total_len)
 {
 	wl_twt_config_t val;
@@ -11572,7 +11649,7 @@ wl_android_twt_setup(struct net_device *ndev, char *command, int total_len)
 		WL_ERR(("twt config set failed. ret:%d\n", bw));
 	}
 exit:
-	return bw;
+	return wl_android_twt_bcmerr_to_kernel_err(bw);
 }
 
 static int
@@ -11916,10 +11993,10 @@ wl_android_twt_info(struct net_device *ndev, char *command, int total_len)
 	bw = wldev_iovar_setbuf(ndev, "twt",
 		mybuf, sizeof(mybuf) - rem_len, res_buf, WLC_IOCTL_SMLEN, NULL);
 	if (bw < 0) {
-		WL_ERR(("twt teardown failed. ret:%d\n", bw));
+		WL_ERR(("twt info failed. ret:%d\n", bw));
 	}
 exit:
-	return bw;
+	return wl_android_twt_bcmerr_to_kernel_err(bw);
 
 }
 
@@ -11982,7 +12059,7 @@ wl_android_twt_teardown(struct net_device *ndev, char *command, int total_len)
 		WL_ERR(("twt teardown failed. ret:%d\n", bw));
 	}
 exit:
-	return bw;
+	return wl_android_twt_bcmerr_to_kernel_err(bw);
 }
 
 /* wl twt stats result display version 2 */

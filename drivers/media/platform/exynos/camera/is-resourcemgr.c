@@ -69,6 +69,8 @@
 #include "is-dvfs.h"
 #include "is-interface-library.h"
 #include "hardware/is-hw-control.h"
+#include "votf/camerapp-votf.h"
+#include "is-device-camif-dma.h"
 
 #if IS_ENABLED(CONFIG_EXYNOS_MSN)
 #include <linux/ems.h>
@@ -1394,7 +1396,7 @@ int is_resource_cdump(void)
 	struct is_groupmgr *groupmgr;
 	struct is_device_ischain *device = NULL;
 	struct is_device_csi *csi;
-	int i, j, vc;
+	int i, j;
 
 	core = (struct is_core *)dev_get_drvdata(is_dev);
 	if (!core)
@@ -1445,18 +1447,8 @@ int is_resource_cdump(void)
 
 		if (device->sensor && !test_bit(IS_ISCHAIN_REPROCESSING, &device->state)) {
 			csi = (struct is_device_csi *)v4l2_get_subdevdata(device->sensor->subdev_csi);
-			if (csi) {
-				csi_hw_cdump(csi->base_reg);
-				csi_hw_phy_cdump(csi->phy_reg, csi->ch);
-				for (vc = CSI_VIRTUAL_CH_0; vc < CSI_VIRTUAL_CH_MAX; vc++) {
-					csi_hw_vcdma_cdump(csi->vc_reg[csi->scm][vc]);
-					csi_hw_vcdma_cmn_cdump(csi->cmn_reg[csi->scm][vc]);
-				}
-				csi_hw_common_dma_cdump(csi->csi_dma->base_reg);
-#if defined(ENABLE_PDP_STAT_DMA)
-				csi_hw_common_dma_cdump(csi->csi_dma->base_reg_stat);
-#endif
-			}
+			if (csi)
+				csi_hw_cdump_all(csi);
 		}
 
 		cinfo("### 3. DUMP frame manager ###\n");
@@ -1573,7 +1565,7 @@ int is_resource_dump(void)
 	struct is_groupmgr *groupmgr;
 	struct is_device_ischain *device = NULL;
 	struct is_device_csi *csi;
-	int i, j, vc;
+	int i, j;
 
 	core = (struct is_core *)dev_get_drvdata(is_dev);
 	if (!core)
@@ -1610,18 +1602,8 @@ int is_resource_dump(void)
 
 		if (device->sensor && !test_bit(IS_ISCHAIN_REPROCESSING, &device->state)) {
 			csi = (struct is_device_csi *)v4l2_get_subdevdata(device->sensor->subdev_csi);
-			if (csi) {
-				csi_hw_dump(csi->base_reg);
-				csi_hw_phy_dump(csi->phy_reg, csi->ch);
-				for (vc = CSI_VIRTUAL_CH_0; vc < CSI_VIRTUAL_CH_MAX; vc++) {
-					csi_hw_vcdma_dump(csi->vc_reg[csi->scm][vc]);
-					csi_hw_vcdma_cmn_dump(csi->cmn_reg[csi->scm][vc]);
-				}
-				csi_hw_common_dma_dump(csi->csi_dma->base_reg);
-#if defined(ENABLE_PDP_STAT_DMA)
-				csi_hw_common_dma_dump(csi->csi_dma->base_reg_stat);
-#endif
-			}
+			if (csi)
+				csi_hw_dump_all(csi);
 		}
 
 		/* dump all framemgr */
@@ -2011,6 +1993,7 @@ static void is_resource_reset(struct is_resourcemgr *resourcemgr)
 	resourcemgr->cdump_ptr = 0;
 	resourcemgr->sfrdump_ptr = 0;
 #endif
+	votfitf_init();
 }
 
 static void is_resource_clear(struct is_resourcemgr *resourcemgr)
@@ -2179,8 +2162,6 @@ int is_resource_get(struct is_resourcemgr *resourcemgr, u32 rsc_type)
 			goto p_err;
 		}
 #endif
-		/* CSIS common DMA rcount set */
-		atomic_set(&core->csi_dma.rcount, 0);
 #if defined(SECURE_CAMERA_FACE)
 		mutex_init(&core->secure_state_lock);
 		core->secure_state = IS_STATE_UNSECURE;
@@ -2336,6 +2317,9 @@ int is_resource_get(struct is_resourcemgr *resourcemgr, u32 rsc_type)
 		/* when the first sensor device be opened */
 		if (rsc_type < RESOURCE_TYPE_ISCHAIN)
 			is_hw_camif_init();
+
+		/* It must be done after power on, because of accessing mux register */
+		is_camif_wdma_init();
 	}
 
 	atomic_inc(&resource->rsccount);

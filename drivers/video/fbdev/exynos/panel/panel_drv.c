@@ -4322,7 +4322,6 @@ static int panel_input_notifier_callback(struct notifier_block *nb,
 #if defined(CONFIG_SUPPORT_FAST_DISCHARGE)
 int panel_fast_discharge_set(struct panel_device *panel)
 {
-	struct panel_gpio *gpio = panel->gpio;
 	int ret = 0;
 
 	mutex_lock(&panel->io_lock);

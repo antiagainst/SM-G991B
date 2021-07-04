@@ -34,7 +34,7 @@
 
 void mfc_get_corelock_ctx(struct mfc_ctx *ctx);
 void mfc_release_corelock_ctx(struct mfc_ctx *ctx);
-void mfc_get_corelock_migrate(struct mfc_ctx *ctx);
+int mfc_get_corelock_migrate(struct mfc_ctx *ctx);
 void mfc_release_corelock_migrate(struct mfc_ctx *ctx);
 
 int mfc_wait_for_done_core(struct mfc_core *core, int command);
