@@ -7503,7 +7503,7 @@
 					rear_single_wide_video_fhd30_cam = <0x99cf0>;
 					rear_single_wide_video_fhd30_csis = <0xa1220>;
 					rear_single_wide_video_fhd30_isp = <0x99cf0>;
-					rear_single_wide_video_fhd30_mif = <0x14a140>;
+					rear_single_wide_video_fhd30_mif = <0xf78f0>;
 					rear_single_wide_video_fhd30_int = <0x61a80>;
 					rear_single_wide_video_fhd30_hpg = <0x01>;
 					rear_single_wide_video_fhd30_cpu = "0-3";
@@ -7647,7 +7647,7 @@
 					rear_single_ultrawide_video_fhd60_cam = <0xa1220>;
 					rear_single_ultrawide_video_fhd60_csis = <0xa1220>;
 					rear_single_ultrawide_video_fhd60_isp = <0x9eb10>;
-					rear_single_ultrawide_video_fhd60_mif = <0x22e980>;
+					rear_single_ultrawide_video_fhd60_mif = <0x177bb8>;
 					rear_single_ultrawide_video_fhd60_int = <0x61a80>;
 					rear_single_ultrawide_video_fhd60_hpg = <0x01>;
 					rear_single_ultrawide_video_fhd60_cpu = "4-6";
@@ -7806,8 +7806,8 @@
 					rear_dual_wide_tele_video_fhd30_int_cam = <0x9eb10>;
 					rear_dual_wide_tele_video_fhd30_cam = <0x9eb10>;
 					rear_dual_wide_tele_video_fhd30_csis = <0xa1220>;
-					rear_dual_wide_tele_video_fhd30_isp = <0x9eb10>;
-					rear_dual_wide_tele_video_fhd30_mif = <0x1a2f20>;
+					rear_dual_wide_tele_video_fhd30_isp = <0x9c400>;
+					rear_dual_wide_tele_video_fhd30_mif = <0x177bb8>;
 					rear_dual_wide_tele_video_fhd30_int = <0x61a80>;
 					rear_dual_wide_tele_video_fhd30_hpg = <0x01>;
 					rear_dual_wide_tele_video_fhd30_cpu = "0-3";
@@ -8856,13 +8856,13 @@
 				kallsyms {
 					_stext = <0xffffffc0 0x10081000>;
 					_etext = <0xffffffc0 0x10f00000>;
-					kallsyms_offsets = <0xffffffc0 0x112e2550>;
-					kallsyms_relative_base = <0xffffffc0 0x11360918>;
-					kallsyms_num_syms = <0xffffffc0 0x11360920>;
-					kallsyms_names = <0xffffffc0 0x11360928>;
-					kallsyms_markers = <0xffffffc0 0x116143a0>;
-					kallsyms_token_table = <0xffffffc0 0x11614b88>;
-					kallsyms_token_index = <0xffffffc0 0x11614ee0>;
+					kallsyms_offsets = <0xffffffc0 0x112e2c50>;
+					kallsyms_relative_base = <0xffffffc0 0x11361020>;
+					kallsyms_num_syms = <0xffffffc0 0x11361028>;
+					kallsyms_names = <0xffffffc0 0x11361030>;
+					kallsyms_markers = <0xffffffc0 0x11614b00>;
+					kallsyms_token_table = <0xffffffc0 0x116152e8>;
+					kallsyms_token_index = <0xffffffc0 0x11615640>;
 					_sinittext = <0xffffffc0 0x11980000>;
 					_einittext = <0xffffffc0 0x119fe5ac>;
 					_end = <0xffffffc0 0x1202e000>;
