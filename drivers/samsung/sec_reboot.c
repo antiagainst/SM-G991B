@@ -252,11 +252,6 @@ static void sec_power_off(void)
 		if (exynos_reboot_ops.pmic_off_main_wa() < 0)
 			pr_err("pmic_off_main_wa error\n");
 	}
-	/* PMIC EVT1: Fix off-sequence */
-	if (exynos_reboot_ops.pmic_off_seq_wa) {
-		if (exynos_reboot_ops.pmic_off_seq_wa() < 0)
-			pr_err("pmic_off_seq_wa error\n");
-	}
 
 	sec_set_reboot_magic(SEC_REBOOT_LPM, SEC_REBOOT_END_OFFSET, 0xFF);
 	psy_do_property("ac", get, POWER_SUPPLY_PROP_ONLINE, ac_val);
@@ -297,6 +292,12 @@ static void sec_power_off(void)
 		if (exynos_reboot_pwrkey_status()) 
 			pr_info("PWR Key is not released (%d)(poweroff_try:%d)\n", exynos_reboot_pwrkey_status(), poweroff_try);
 		else {
+			/* PMIC EVT1: Fix off-sequence */
+			if (exynos_reboot_ops.pmic_off_seq_wa) {
+				if (exynos_reboot_ops.pmic_off_seq_wa() < 0)
+					pr_err("pmic_off_seq_wa error\n");
+			}
+
 			if (exynos_reboot_ops.acpm_reboot)
 				exynos_reboot_ops.acpm_reboot();
 			else

@@ -114,6 +114,7 @@ enum is_subscenario_id {
 	ISS_SUB_SCENARIO_VIDEO_3RD_PARTY_WDR_AUTO = 68,                             /* 68: 3rd Party Video (HDR Auto) */
 	ISS_SUB_SCENARIO_STILL_CAPTURE_3RD_PARTY_WDR_AUTO = 69,                     /* 69: 3rd Party Capture (HDR Auto) */
 	ISS_SUB_SCENARIO_FRONT_SMART_STAY = 70,                                     /* 70: Smart Stay */
+	ISS_SUB_SCENARIO_FRONT_3RD_PARY_VT = 71,                                    /* 3rd Party VT call (HDR Auto) */
 
 	ISS_SUB_SCENARIO_VIDEO_ISPLP_TNR = 110,                                     /* TODO: 110: ISPLT_TNR */
 	ISS_SUB_END,
@@ -1251,6 +1252,7 @@ enum aa_dynamic_bds_mode {
 	AA_DYNAMIC_BDS_MODE_OFF = 0,
 	AA_DYNAMIC_BDS_MODE_LOW_LIGHT_ON = 1,	/* IQ controlled */
 	AA_DYNAMIC_BDS_MODE_SYSTEM_ON  = 2,	/* HAL controlled */
+	AA_DYNAMIC_BDS_MODE_VT_CALL_LOW_POWER  = 3, 	/* HAL controlled */
 };
 
 enum aa_enable_dynamicshot {
@@ -2323,6 +2325,7 @@ enum camera_client_index {
 	CAMERA_APP_CATEGORY_B612               = 17,
 	CAMERA_APP_CATEGORY_SODA               = 18,
 	CAMERA_APP_CATEGORY_FOODIE             = 19,
+	CAMERA_APP_CATEGORY_ZOOM               = 20,
 	CAMERA_APP_CATEGORY_MAX
 };
 

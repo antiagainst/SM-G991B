@@ -421,7 +421,8 @@ enum coord_action {
 	SEC_TS_COORDINATE_ACTION_FORCE_RELEASE = 4,
 };
 
-#define SEC_TS_LFD_CTRL_LOCK_TIME	500	//msec
+#define SEC_TS_LFD_CTRL_LOCK_TIME	500	/* msec */
+#define SEC_TS_WAKE_LOCK_TIME		500	/* msec */
 
 enum lfd_lock_ctrl {
 	SEC_TS_LFD_CTRL_LOCK = 0,

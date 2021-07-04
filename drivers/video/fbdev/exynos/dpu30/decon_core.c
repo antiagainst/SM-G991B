@@ -3375,7 +3375,6 @@ static int decon_set_vrr(struct decon_device *decon,
 }
 #endif
 
-int boot_first_frame;
 static int decon_set_win_config(struct decon_device *decon,
 		struct decon_win_config_data *win_data)
 {
@@ -3387,9 +3386,6 @@ static int decon_set_win_config(struct decon_device *decon,
 #if defined(CONFIG_EXYNOS_SUPPORT_READBACK)
 	struct sync_file *sync_ofile;
 	int readback_fence = -1;
-#endif
-#if IS_ENABLED(CONFIG_MCD_PANEL)
-	struct dsim_device *dsim;
 #endif
 
 	decon_dbg("%s +\n", __func__);
@@ -3447,15 +3443,7 @@ static int decon_set_win_config(struct decon_device *decon,
 		win_data->retire_fence = decon_create_fence(decon, &sync_ifile);
 		if (win_data->retire_fence < 0)
 			goto err_prepare;
-#if IS_ENABLED(CONFIG_MCD_PANEL)
-		//send first frame ioctl to panel
-		if (unlikely(boot_first_frame == 0 && decon->dt.out_type == DECON_OUT_DSI)) {
-			++boot_first_frame;
-			decon_info("frame_cnt %d\n", decon->frame_cnt);
-			dsim = container_of(decon->out_sd[0], struct dsim_device, sd);
-			dsim_call_panel_ops(dsim, EXYNOS_PANEL_IOC_FIRST_FRAME, NULL);
-		}
-#endif
+
 #if defined(CONFIG_EXYNOS_SUPPORT_READBACK)
 		if (readback_req) {
 			regs->readback_entry.request = readback_req;

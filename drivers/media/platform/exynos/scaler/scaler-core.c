@@ -2210,7 +2210,7 @@ static bool initialize_initermediate_frame(struct sc_ctx *ctx)
 	if (ctx->i_frame->dma_buf[0])
 		return true;
 
-	if(test_bit(CTX_INT_FRAME_CP, &sc->state)) {
+	if (test_bit(CTX_INT_FRAME_CP, &ctx->flags)) {
 		char *heapname = "vscaler_heap";
 
 		heapmask = sc_ion_get_heapmask_by_name(heapname);
@@ -2350,12 +2350,12 @@ static int sc_prepare_2nd_scaling(struct sc_ctx *ctx,
 		crop.width = ALIGN(crop.width, 4);
 
 	if ((ctx->i_frame->frame.sc_fmt != ctx->d_frame.sc_fmt) ||
-		memcmp(&crop, &ctx->i_frame->frame.crop, sizeof(crop)) ||
-		(ctx->cp_enabled != test_bit(CTX_INT_FRAME_CP, &sc->state))) {
-		if(ctx->cp_enabled)
-			set_bit(CTX_INT_FRAME_CP, &sc->state);
+	    memcmp(&crop, &ctx->i_frame->frame.crop, sizeof(crop)) ||
+	    (ctx->cp_enabled != test_bit(CTX_INT_FRAME_CP, &ctx->flags))) {
+		if (ctx->cp_enabled)
+			set_bit(CTX_INT_FRAME_CP, &ctx->flags);
 		else
-			clear_bit(CTX_INT_FRAME_CP, &sc->state);
+			clear_bit(CTX_INT_FRAME_CP, &ctx->flags);
 
 		memcpy(&ctx->i_frame->frame, &ctx->d_frame,
 				sizeof(ctx->d_frame));

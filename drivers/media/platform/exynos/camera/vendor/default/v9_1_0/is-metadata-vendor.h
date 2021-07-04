@@ -112,6 +112,8 @@ enum is_subscenario_id {
 	ISS_SUB_SCENARIO_VIDEO_3RD_PARTY_WDR_AUTO = 68,                             /* 68: 3rd Party Video (HDR Auto) */
 	ISS_SUB_SCENARIO_STILL_CAPTURE_3RD_PARTY_WDR_AUTO = 69,                     /* 69: 3rd Party Capture (HDR Auto) */
 	ISS_SUB_SCENARIO_FRONT_SMART_STAY = 70,                                     /* 70: Smart Stay */
+	ISS_SUB_SCENARIO_FRONT_3RD_PARY_VT = 71,                                    /* 3rd Party VT call (HDR Auto) */
+	ISS_SUB_SCENARIO_VIDEO_PRO_HIGH_SPEED = 72,                                 /* 72 : Pro video 120fps */
 
 	ISS_SUB_SCENARIO_VIDEO_ISPLP_TNR = 110,                                     /* TODO: 110: ISPLT_TNR */
 	ISS_SUB_END,

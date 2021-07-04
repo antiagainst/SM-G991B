@@ -3249,7 +3249,7 @@ static ssize_t camera_ois_rear3_gain_show(struct device *dev,
 
 	info("%s xgain/ygain = 0x%08x/0x%08x", __func__, xgain, ygain);
 
-	if ((ois_pinfo->tele_romdata.xgg[0] == 0xFF) && (ois_pinfo->tele_romdata.ygg[0] == 0xFF)) {
+	if ((xgain == 0xFFFFFFFF) && (ygain == 0xFFFFFFFF)) {
 		return sprintf(buf, "%d\n", 2);
 	} else if (ois_pinfo->tele_romdata.cal_mark[0] != 0xBB) {
 		return sprintf(buf, "%d\n", 1);
@@ -3272,7 +3272,7 @@ static ssize_t camera_ois_rear3_supperssion_ratio_show(struct device *dev,
 
 	info("%s xratio/yratio = %d.%d/%d.%d", __func__, xratio / 100, xratio % 100, yratio / 100, yratio % 100);
 
-	if ((ois_pinfo->tele_romdata.supperssion_xratio[0] == 0xFF) && (ois_pinfo->tele_romdata.supperssion_yratio[0] == 0xFF)) {
+	if ((xratio == 0xFFFF) && (yratio == 0xFFFF)) {
 		return sprintf(buf, "%d\n", 2);
 	} else if (ois_pinfo->tele_romdata.cal_mark[0] != 0xBB) {
 		return sprintf(buf, "%d\n", 1);
@@ -3296,7 +3296,7 @@ static ssize_t camera_ois_rear4_gain_show(struct device *dev,
 
 	info("%s xgain/ygain = 0x%08x/0x%08x", __func__, xgain, ygain);
 
-	if ((ois_pinfo->tele2_romdata.xgg[0] == 0xFF) && (ois_pinfo->tele2_romdata.ygg[0] == 0xFF)) {
+	if ((xgain == 0xFFFFFFFF) && (ygain == 0xFFFFFFFF)) {
 		return sprintf(buf, "%d\n", 2);
 	} else if (ois_pinfo->tele2_romdata.cal_mark[0] != 0xBB) {
 		return sprintf(buf, "%d\n", 1);
@@ -3319,7 +3319,7 @@ static ssize_t camera_ois_rear4_supperssion_ratio_show(struct device *dev,
 
 	info("%s xratio/yratio = %d.%d/%d.%d", __func__, xratio / 100, xratio % 100, yratio / 100, yratio % 100);
 
-	if ((ois_pinfo->tele2_romdata.supperssion_xratio[0] == 0xFF) && (ois_pinfo->tele2_romdata.supperssion_yratio[0] == 0xFF)) {
+	if ((xratio == 0xFFFF) && (yratio == 0xFFFF)) {
 		return sprintf(buf, "%d\n", 2);
 	} else if (ois_pinfo->tele2_romdata.cal_mark[0] != 0xBB) {
 		return sprintf(buf, "%d\n", 1);
@@ -3588,7 +3588,7 @@ static ssize_t camera_ois_rear_gain_show(struct device *dev,
 
 	info("%s xgain/ygain = 0x%08x/0x%08x", __func__, xgain, ygain);
 
-	if ((ois_pinfo->wide_romdata.xgg[0] == 0xFF) && (ois_pinfo->wide_romdata.ygg[0] == 0xFF)) {
+	if ((xgain == 0xFFFFFFFF) && (ygain == 0xFFFFFFFF)) {
 		return sprintf(buf, "%d\n", 2);
 	} else if (ois_pinfo->wide_romdata.cal_mark[0]!= 0xBB) {
 		return sprintf(buf, "%d\n", 1);
@@ -3611,7 +3611,7 @@ static ssize_t camera_ois_rear_supperssion_ratio_show(struct device *dev,
 
 	info("%s xratio/yratio = %d.%d/%d.%d", __func__, xratio / 100, xratio % 100, yratio / 100, yratio % 100);
 
-	if ((ois_pinfo->wide_romdata.supperssion_xratio[0] == 0xFF) && (ois_pinfo->wide_romdata.supperssion_yratio[0] == 0xFF)) {
+	if ((xratio == 0xFFFF) && (yratio == 0xFFFF)) {
 		return sprintf(buf, "%d\n", 2);
 	} else if (ois_pinfo->wide_romdata.cal_mark[0] != 0xBB) {
 		return sprintf(buf, "%d\n", 1);

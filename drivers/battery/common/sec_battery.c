@@ -3291,6 +3291,14 @@ static void sec_bat_wpc_tx_work(struct work_struct *work)
 	sec_bat_wpc_tx_work_content(battery);
 }
 
+static void sec_bat_wpc_tx_en_work(struct work_struct *work)
+{
+	struct sec_battery_info *battery = container_of(work,
+				struct sec_battery_info, wpc_tx_en_work.work);
+
+	sec_bat_wpc_tx_en_work_content(battery);
+}
+
 static void sec_bat_txpower_calc_work(struct work_struct *work)
 {
 	struct sec_battery_info *battery = container_of(work,
@@ -6165,6 +6173,7 @@ static int sec_battery_probe(struct platform_device *pdev)
 	battery->ext_event_ws = wakeup_source_register(&pdev->dev, "sec-battery-ext_event");
 	battery->wc_headroom_ws = wakeup_source_register(&pdev->dev, "sec-battery-wc_headroom");
 	battery->wpc_tx_ws = wakeup_source_register(&pdev->dev, "sec-battery-wcp-tx");
+	battery->wpc_tx_ws = wakeup_source_register(&pdev->dev, "sec-battery-wpc_tx_en");
 	battery->tx_event_ws = wakeup_source_register(&pdev->dev, "sec-battery-tx-event");
 #endif
 #if defined(CONFIG_UPDATE_BATTERY_DATA)
@@ -6377,6 +6386,7 @@ static int sec_battery_probe(struct platform_device *pdev)
 #endif
 #if IS_ENABLED(CONFIG_WIRELESS_CHARGER_MFC)
 	INIT_DELAYED_WORK(&battery->wpc_tx_work, sec_bat_wpc_tx_work);
+	INIT_DELAYED_WORK(&battery->wpc_tx_en_work, sec_bat_wpc_tx_en_work);
 	INIT_DELAYED_WORK(&battery->wpc_txpower_calc_work, sec_bat_txpower_calc_work);
 	INIT_DELAYED_WORK(&battery->ext_event_work, sec_bat_ext_event_work);
 	INIT_DELAYED_WORK(&battery->wc_headroom_work, sec_bat_wc_headroom_work);
@@ -6571,6 +6581,7 @@ err_irq:
 	wakeup_source_unregister(battery->ext_event_ws);
 	wakeup_source_unregister(battery->wc_headroom_ws);
 	wakeup_source_unregister(battery->wpc_tx_ws);
+	wakeup_source_unregister(battery->wpc_tx_en_ws);
 	wakeup_source_unregister(battery->tx_event_ws);
 #endif
 #if defined(CONFIG_UPDATE_BATTERY_DATA)
@@ -6629,6 +6640,7 @@ static int sec_battery_remove(struct platform_device *pdev)
 	wakeup_source_unregister(battery->ext_event_ws);
 	wakeup_source_unregister(battery->wc_headroom_ws);
 	wakeup_source_unregister(battery->wpc_tx_ws);
+	wakeup_source_unregister(battery->wpc_tx_en_ws);
 	wakeup_source_unregister(battery->tx_event_ws);
 #endif
 #if defined(CONFIG_UPDATE_BATTERY_DATA)
@@ -6762,6 +6774,7 @@ static void sec_battery_shutdown(struct platform_device *pdev)
 #endif
 #if IS_ENABLED(CONFIG_WIRELESS_CHARGER_MFC)
 	cancel_delayed_work(&battery->wpc_tx_work);
+	cancel_delayed_work(&battery->wpc_tx_en_work);
 	cancel_delayed_work(&battery->wpc_txpower_calc_work);
 	cancel_delayed_work(&battery->ext_event_work);
 	cancel_delayed_work(&battery->wc_headroom_work);

@@ -1588,19 +1588,13 @@ end_of_tx_work:
 	__pm_relax(battery->wpc_tx_ws);
 }
 
-void sec_wireless_set_tx_enable(struct sec_battery_info *battery, bool wc_tx_enable)
+void sec_bat_wpc_tx_en_work_content(struct sec_battery_info *battery)
 {
 	union power_supply_propval value = {0, };
 
-	pr_info("@Tx_Mode %s: TX Power enable ? (%d)\n", __func__, wc_tx_enable);
+	pr_info("@Tx_Mode %s: tx %s\n", __func__,
+		battery->wc_tx_enable ? "on" : "off");
 
-	if (battery->pdata->tx_5v_disable && wc_tx_enable && is_5v_charger(battery)) {
-		pr_info("@Tx_Mode %s : 5V charger(%d) connected, do not turn on TX\n", __func__, battery->cable_type);
-		sec_bat_set_tx_event(battery, BATT_TX_EVENT_WIRELESS_TX_5V_TA, BATT_TX_EVENT_WIRELESS_TX_5V_TA);
-		return;
-	}
-
-	battery->wc_tx_enable = wc_tx_enable;
 	battery->tx_minduty = battery->pdata->tx_minduty_default;
 	battery->tx_switch_mode = TX_SWITCH_MODE_OFF;
 	battery->tx_switch_start_soc = 0;
@@ -1611,7 +1605,7 @@ void sec_wireless_set_tx_enable(struct sec_battery_info *battery, bool wc_tx_ena
 	battery->wc_found_gear_freq = false;
 #endif
 
-	if (wc_tx_enable) {
+	if (battery->wc_tx_enable) {
 		/* set tx event */
 		sec_bat_set_tx_event(battery, BATT_TX_EVENT_WIRELESS_TX_STATUS,
 			(BATT_TX_EVENT_WIRELESS_TX_STATUS | BATT_TX_EVENT_WIRELESS_TX_RETRY));
@@ -1682,5 +1676,26 @@ void sec_wireless_set_tx_enable(struct sec_battery_info *battery, bool wc_tx_ena
 
 		__pm_relax(battery->wpc_tx_ws);
 	}
+
+	pr_info("@Tx_Mode %s Done\n", __func__);
+	__pm_relax(battery->wpc_tx_en_ws);
+}
+
+void sec_wireless_set_tx_enable(struct sec_battery_info *battery, bool wc_tx_enable)
+{
+	pr_info("@Tx_Mode %s: TX Power enable ? (%d)\n", __func__, wc_tx_enable);
+
+	if (battery->pdata->tx_5v_disable && wc_tx_enable && is_5v_charger(battery)) {
+		pr_info("@Tx_Mode %s : 5V charger(%d) connected, do not turn on TX\n", __func__, battery->cable_type);
+		sec_bat_set_tx_event(battery, BATT_TX_EVENT_WIRELESS_TX_5V_TA, BATT_TX_EVENT_WIRELESS_TX_5V_TA);
+		return;
+	}
+
+	battery->wc_tx_enable = wc_tx_enable;
+
+	cancel_delayed_work(&battery->wpc_tx_en_work);
+	__pm_stay_awake(battery->wpc_tx_en_ws);
+	queue_delayed_work(battery->monitor_wqueue,
+		&battery->wpc_tx_en_work, 0);
 }
 EXPORT_SYMBOL(sec_wireless_set_tx_enable);

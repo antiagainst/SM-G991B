@@ -858,6 +858,7 @@ struct is_ois_ops {
 #endif
 	bool (*ois_check_fw)(struct is_core *core);
 	void (*ois_enable)(struct is_core *core);
+	int (*ois_disable)(struct v4l2_subdev *subdev);
 	bool (*ois_offset_test)(struct is_core *core, long *raw_data_x, long *raw_data_y);
 	void (*ois_get_offset_data)(struct is_core *core, long *raw_data_x, long *raw_data_y);
 	void (*ois_gyro_sleep)(struct is_core *core);

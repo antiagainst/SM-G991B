@@ -820,7 +820,7 @@ void dpu_bts_acquire_bw(struct decon_device *decon)
 			DPU_ERR_BTS("%s int qos setting error\n", __func__);
 
 		if (exynos_pm_qos_request_active(&decon->bts.disp_qos))
-			exynos_pm_qos_update_request(&decon->bts.disp_qos, 400 * 1000);
+			exynos_pm_qos_update_request(&decon->bts.disp_qos, 533 * 1000);
 		else
 			DPU_ERR_BTS("%s int qos setting error\n", __func__);
 

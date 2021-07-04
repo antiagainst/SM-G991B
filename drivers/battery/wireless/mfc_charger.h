@@ -1151,6 +1151,7 @@ struct mfc_charger_data {
 	mfc_charger_platform_data_t 	*pdata;
 	struct mutex io_lock;
 	struct mutex wpc_en_lock;
+	struct mutex fw_lock;
 	const struct firmware *firm_data_bin;
 
 	int wc_w_state;
@@ -1248,6 +1249,7 @@ struct mfc_charger_data {
 
 	bool req_tx_id;
 	bool is_abnormal_pad;
+	bool afc_tx_done;
 
 	bool sleep_mode;
 #if defined(CONFIG_WIRELESS_IC_PARAM)

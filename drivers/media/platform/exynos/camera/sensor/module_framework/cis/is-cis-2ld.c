@@ -935,6 +935,13 @@ int sensor_2ld_cis_mode_change(struct v4l2_subdev *subdev, u32 mode)
 #ifdef USE_CAMERA_SENSOR_RETENTION
 	/* Retention mode sensor mode select */
 	if (ext_info->use_retention_mode == SENSOR_RETENTION_ACTIVATED) {
+		if (sensor_2ld_load_retention == false) {
+			is_sensor_write16(cis->client, 0x6028, 0x2000);
+			is_sensor_write16(cis->client, 0x602A, 0x0E1C);
+			is_sensor_write16(cis->client, 0x6F12, 0x0000);
+			is_sensor_write16(cis->client, 0x6F12, 0x0000);
+		}
+
 		sensor_2ld_load_retention = false;
 
 		switch (mode) {

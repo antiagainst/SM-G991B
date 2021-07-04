@@ -95,6 +95,7 @@ struct ois_mcu_dev {
 	unsigned long		state;
 	atomic_t 		shared_rsc_count;
 	int			current_rsc_count;
+	bool			dev_ctrl_state;
 };
 
 enum is_efs_state {

@@ -66,6 +66,9 @@
 /* BUG_ON | FIMC_BUG Macro control */
 #define USE_FIMC_BUG
 
+#if !IS_ENABLED(CONFIG_USE_SIGNED_BINARY)
+#define USE_KERNEL_VFS_READ_WRITE
+#endif
 /*
  * =================================================================================================
  * CONFIG - DEBUG OPTIONS

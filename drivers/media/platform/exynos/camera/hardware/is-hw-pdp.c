@@ -490,7 +490,7 @@ static irqreturn_t is_isr_pdp_int1(int irq, void *data)
 		is_hardware_sfr_dump(hw_ip->hardware, hw_ip->id, false);
 
 		if (pdp_hw_is_occurred(state, PE_PAF_OVERFLOW)) {
-#if IS_ENABLED(CONFIG_EXYNOS_SCI_DBG)
+#if IS_ENABLED(CONFIG_EXYNOS_SCI_DBG_AUTO)
 			smc_ppc_enable(0);
 #endif
 			print_all_hw_frame_count(hw_ip->hardware);
@@ -559,7 +559,7 @@ static irqreturn_t is_isr_pdp_int2(int irq, void *data)
 		is_hardware_sfr_dump(hw_ip->hardware, hw_ip->id, false);
 
 		if (pdp_hw_is_occurred(state, PE_PAF_OVERFLOW)) {
-#if IS_ENABLED(CONFIG_EXYNOS_SCI_DBG)
+#if IS_ENABLED(CONFIG_EXYNOS_SCI_DBG_AUTO)
 			smc_ppc_enable(0);
 #endif
 			print_all_hw_frame_count(hw_ip->hardware);

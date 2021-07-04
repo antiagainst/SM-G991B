@@ -24,7 +24,7 @@ int sec_input_handler_start(void *data)
 		return SEC_ERROR;
 
 	if (pdata->power_state == SEC_INPUT_STATE_LPM) {
-		__pm_wakeup_event(pdata->sec_ws, jiffies_to_msecs(500));
+		__pm_wakeup_event(pdata->sec_ws, SEC_TS_WAKE_LOCK_TIME);
 
 		ret = wait_for_completion_interruptible_timeout(&pdata->resume_done, msecs_to_jiffies(500));
 		if (ret == 0) {

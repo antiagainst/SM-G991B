@@ -1007,7 +1007,7 @@ static void csi_err_print(struct is_device_csi *csi)
 				is_sec_copy_err_cnt_to_file();
 #endif
 #endif
-#if IS_ENABLED(CONFIG_EXYNOS_SCI_DBG)
+#if IS_ENABLED(CONFIG_EXYNOS_SCI_DBG_AUTO)
 				smc_ppc_enable(0);
 #endif
 
@@ -1102,8 +1102,10 @@ static void csi_err_handle_ext(struct is_device_csi *csi, u32 error_id_all)
 			/* get connected ip status for detect reason of dma overlap */
 			csi_debug_otf(group, csi);
 
-			if (test_bit(IS_GROUP_VOTF_OUTPUT, &group->state))
+			if (test_bit(IS_GROUP_VOTF_OUTPUT, &group->state)) {
+				is_votf_check_wait_con(group->next);
 				is_votf_check_invalid_state(group->next);
+			}
 		}
 
 		if (csi->error_count_vc_overlap >= CSI_ERR_COUNT - 1)
@@ -1148,9 +1150,9 @@ static void csi_err_handle(struct is_device_csi *csi)
 		core = device->private_data;
 
 #ifdef CONFIG_CAMERA_VENDER_MCD /* for ESD recovery */
-		err("Checking ESD : csi->error_count = %d, vblank_count = %d",
-			csi->error_count, atomic_read(&csi->vblank_count));
-		if (csi->error_count >= atomic_read(&csi->vblank_count)) {
+		err("Checking ESD : csi->error_count = %d, vblank_count = %d, tasklet_csis_end_count = %d",
+			csi->error_count, atomic_read(&csi->vblank_count), csi->tasklet_csis_end_count);
+		if (csi->error_count >= csi->tasklet_csis_end_count) {
 			set_bit(IS_SENSOR_FRONT_DTP_STOP, &device->state);
 		} else {
 			set_bit(IS_SENSOR_ESD_RECOVERY, &device->state);
@@ -1314,6 +1316,8 @@ static void tasklet_csis_end(unsigned long data)
 
 	for (ch = CSI_VIRTUAL_CH_0; ch < CSI_VIRTUAL_CH_MAX; ch++)
 		err_flag |= csi->error_id[ch];
+
+	csi->tasklet_csis_end_count++;
 
 	if (err_flag) {
 		csi_err_handle(csi);
@@ -1692,6 +1696,7 @@ int is_csi_open(struct v4l2_subdev *subdev,
 	csi->sensor_cfg = NULL;
 	csi->error_count = 0;
 	csi->error_count_vc_overlap = 0;
+	csi->tasklet_csis_end_count = 0;
 	csi->sensor_id = SENSOR_NAME_NOTHING;
 
 	for (vc = CSI_VIRTUAL_CH_0; vc < CSI_VIRTUAL_CH_MAX; vc++)
@@ -2082,6 +2087,7 @@ static int csi_s_fro(struct is_device_csi *csi, struct is_sensor_cfg *sensor_cfg
 	minfo("[CSI%d] fro dma_batch_num %d\n", csi, csi->ch, csi->dma_batch_num);
 
 	atomic_set(&csi->bufring_cnt, 0);
+	csi->otf_batch_num = 1; /* Set default value, will be determined by frame->num_buffers */
 
 	dma_ch = csi->dma_subdev[0]->dma_ch[csi->scm];
 	csi_hw_s_dma_common_frame_id_decoder(csi_dma->base_reg, dma_ch,
@@ -2250,6 +2256,7 @@ static int csi_stream_on(struct v4l2_subdev *subdev,
 	csi->hw_fcount = csi_hw_s_fcount(base_reg, CSI_VIRTUAL_CH_0, 0);
 	csi->error_count = 0;
 	csi->error_count_vc_overlap = 0;
+	csi->tasklet_csis_end_count = 0;
 
 	ret = csi_request_irq(csi);
 	if (ret) {

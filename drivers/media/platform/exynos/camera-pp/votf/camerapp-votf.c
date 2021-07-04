@@ -1767,11 +1767,23 @@ int votfitf_check_invalid_state(struct votf_info *s_vinfo, struct votf_info *d_v
 
 	/* s2d for debugging */
 	if ((tws_state & (GENMASK(3,0))) == VOTF_WAIT_TOKEN_ACK ||
-	    (tws_state & (GENMASK(3,0))) == VOTF_WAIT_RESET_ACK) {
+	    (trs_state & (GENMASK(3,0))) == VOTF_WAIT_RESET_ACK) {
 		pr_err("%s: debug state(TWS(0x%04X-%d): 0x%X, TRS(0x%04X-%d): 0x%X)\n",
 			__func__, s_ip, s_id, tws_state, d_ip, d_id, trs_state);
 
 		camerapp_debug_s2d(true, "VOTF invalid state");
+	}
+
+	/* flush votf if IDLE && busy state */
+	if (((tws_state & (GENMASK(3,0))) == VOTF_IDLE) && votfitf_get_busy(s_vinfo)) {
+		votfitf_set_flush_alone(s_vinfo);
+		pr_warn("%s: flush TWS((0x%04X-%d), invalid state (busy, state:0x%X)\n",
+			__func__, s_ip, s_id, tws_state);
+	}
+	if (((trs_state & (GENMASK(3,0))) == VOTF_IDLE) && votfitf_get_busy(d_vinfo)) {
+		votfitf_set_flush_alone(d_vinfo);
+		pr_warn("%s: flush TRS((0x%04X-%d), invalid state (busy, state:0x%X)\n",
+			__func__, d_ip, d_id, trs_state);
 	}
 
 	return 0;

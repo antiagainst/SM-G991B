@@ -21,6 +21,7 @@
 #include <soc/samsung/cpu_cooling.h>
 #include <linux/suspend.h>
 #include <linux/platform_device.h>
+#include <linux/sec_pm_cpufreq.h>
 
 #include <soc/samsung/debug-snapshot.h>
 #include <soc/samsung/cal-if.h>
@@ -1478,6 +1479,8 @@ static int exynos_cpufreq_probe(struct platform_device *pdev)
 			pr_info("failed to init fops with err %d\n", ret);
 			return ret;
 		}
+
+		sec_pm_cpufreq_register(policy);
 	}
 
 	cpu_cooling_notifier_register(&exynos_cpu_cooling_nb);

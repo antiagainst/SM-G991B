@@ -1998,7 +1998,7 @@ static void is_resource_reset(struct is_resourcemgr *resourcemgr)
 #endif
 	exynos_bcm_dbg_start();
 
-#if IS_ENABLED(CONFIG_EXYNOS_SCI_DBG)
+#if IS_ENABLED(CONFIG_EXYNOS_SCI_DBG_AUTO)
 	smc_ppc_enable(1);
 #endif
 
@@ -2076,7 +2076,7 @@ static void is_resource_clear(struct is_resourcemgr *resourcemgr)
 #endif
 	exynos_bcm_dbg_stop(CAMERA_DRIVER);
 
-#if IS_ENABLED(CONFIG_EXYNOS_SCI_DBG)
+#if IS_ENABLED(CONFIG_EXYNOS_SCI_DBG_AUTO)
 	smc_ppc_enable(0);
 #endif
 
@@ -2675,7 +2675,7 @@ void is_resource_clear_global_param(struct is_resourcemgr *resourcemgr, void *de
 		ischain->hardware->video_mode = false;
 
 #ifdef ENABLE_DVFS
-		is_hw_configure_llc(false, 0, &resourcemgr->llc_state);
+		is_hw_configure_llc(false, ischain, &resourcemgr->llc_state);
 #endif
 	}
 

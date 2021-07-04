@@ -150,6 +150,7 @@ struct is_device_csi {
 	u32 error_id_last[CSI_VIRTUAL_CH_MAX];
 	u32 error_count;
 	u32 error_count_vc_overlap;
+	u32 tasklet_csis_end_count;
 
 	atomic_t                        vblank_count; /* Increase at CSI frame end */
 	atomic_t			vvalid; /* set 1 while vvalid period */

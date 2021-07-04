@@ -1875,6 +1875,7 @@ int is_sensor_peri_s_stream(struct is_device_sensor *device,
 	struct is_cis *cis = NULL;
 	struct is_core *core = NULL;
 	struct is_dual_info *dual_info = NULL;
+	struct is_device_sensor *device_mcu = NULL;
 	bool skip_sub_device = false;
 	bool skip_sub_device_mcu = false;
 
@@ -1929,6 +1930,20 @@ int is_sensor_peri_s_stream(struct is_device_sensor *device,
 	}
 
 	if (on) {
+		if (((device->ischain->setfile & IS_SETFILE_MASK) == ISS_SUB_SCENARIO_VIDEO_SUPER_STEADY
+			|| (device->ischain->setfile & IS_SETFILE_MASK) == ISS_SUB_SCENARIO_VIDEO_SUPER_STEADY_WDR_AUTO
+			|| (device->ischain->setfile & IS_SETFILE_MASK) == ISS_SUB_SCENARIO_VIDEO_SUPER_STEADY_WDR_ON) && !sensor_peri->mcu) {
+			device_mcu = &core->sensor[0];
+
+			if (device_mcu->mcu && device_mcu->mcu->off_during_uwonly_mode) {
+				ret = CALL_OISOPS(device_mcu->mcu->ois, ois_disable, device_mcu->subdev_mcu);
+				if (ret < 0)
+					err("v4l2_subdev_call(ois_disable) is fail(%d)", ret);
+
+				info("[%s] ois disable in case of supersteady scenario.", __func__);
+			}
+		}
+
 		if (!skip_sub_device) {
 #ifdef USE_AF_SLEEP_MODE
 #if defined(USE_TELE_OIS_AF_COMMON_INTERFACE) || defined(USE_TELE2_OIS_AF_COMMON_INTERFACE)

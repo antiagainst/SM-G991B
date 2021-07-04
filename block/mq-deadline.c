@@ -32,6 +32,7 @@ static const int write_expire = 5 * HZ; /* ditto for writes, these limits are SO
 static const int writes_starved = 2;    /* max times reads can starve a write */
 static const int fifo_batch = 0;       /* # of sequential requests treated as one
 				     by the above parameters. For throughput. */
+static const int async_percent = 25;	/* reserve 75% of requests for sync. */
 
 struct deadline_data {
 	/*
@@ -58,6 +59,7 @@ struct deadline_data {
 	int fifo_batch;
 	int writes_starved;
 	int front_merges;
+	int async_depth;
 
 	spinlock_t lock;
 	spinlock_t zone_lock;
@@ -101,6 +103,24 @@ deadline_del_rq_rb(struct deadline_data *dd, struct request *rq)
 		dd->next_rq[data_dir] = deadline_latter_request(rq);
 
 	elv_rb_del(deadline_rb_root(dd, rq), rq);
+}
+
+static void dd_limit_depth(unsigned int op, struct blk_mq_alloc_data *data)
+{
+	if (!op_is_sync(op)) {
+		struct deadline_data *dd = data->q->elevator->elevator_data;
+
+		data->shallow_depth = dd->async_depth;
+	}
+}
+
+static int dd_init_hctx(struct blk_mq_hw_ctx *hctx, unsigned int hctx_idx)
+{
+	struct deadline_data *dd = hctx->queue->elevator->elevator_data;
+
+	sbitmap_queue_min_shallow_depth(&hctx->sched_tags->bitmap_tags,
+					dd->async_depth);
+	return 0;
 }
 
 /*
@@ -390,6 +410,15 @@ static struct request *dd_dispatch_request(struct blk_mq_hw_ctx *hctx)
 	return rq;
 }
 
+static unsigned int dd_sched_tags_shift(struct request_queue *q)
+{
+	/*
+	 * All of the hardware queues have the same depth, so we can just grab
+	 * the shift of the first one.
+	 */
+	return q->queue_hw_ctx[0]->sched_tags->bitmap_tags.sb.shift;
+}
+
 static void dd_exit_queue(struct elevator_queue *e)
 {
 	struct deadline_data *dd = e->elevator_data;
@@ -407,6 +436,7 @@ static int dd_init_queue(struct request_queue *q, struct elevator_type *e)
 {
 	struct deadline_data *dd;
 	struct elevator_queue *eq;
+	unsigned int shift;
 
 	eq = elevator_alloc(q, e);
 	if (!eq)
@@ -431,6 +461,9 @@ static int dd_init_queue(struct request_queue *q, struct elevator_type *e)
 	spin_lock_init(&dd->lock);
 	spin_lock_init(&dd->zone_lock);
 	INIT_LIST_HEAD(&dd->dispatch);
+
+	shift = dd_sched_tags_shift(q);
+	dd->async_depth = (1U << shift) * async_percent / 100U;
 
 	q->elevator = eq;
 	return 0;
@@ -615,6 +648,7 @@ SHOW_FUNCTION(deadline_write_expire_show, dd->fifo_expire[WRITE], 1);
 SHOW_FUNCTION(deadline_writes_starved_show, dd->writes_starved, 0);
 SHOW_FUNCTION(deadline_front_merges_show, dd->front_merges, 0);
 SHOW_FUNCTION(deadline_fifo_batch_show, dd->fifo_batch, 0);
+SHOW_FUNCTION(deadline_async_depth_show, dd->async_depth, 0);
 #undef SHOW_FUNCTION
 
 #define STORE_FUNCTION(__FUNC, __PTR, MIN, MAX, __CONV)			\
@@ -643,12 +677,17 @@ STORE_FUNCTION(deadline_fifo_batch_store, &dd->fifo_batch, 0, INT_MAX, 0);
 #define DD_ATTR(name) \
 	__ATTR(name, 0644, deadline_##name##_show, deadline_##name##_store)
 
+#define DD_ATTR_RO(name) \
+        __ATTR(name, 0444, deadline_##name##_show, NULL)
+
+
 static struct elv_fs_entry deadline_attrs[] = {
 	DD_ATTR(read_expire),
 	DD_ATTR(write_expire),
 	DD_ATTR(writes_starved),
 	DD_ATTR(front_merges),
 	DD_ATTR(fifo_batch),
+	DD_ATTR_RO(async_depth),
 	__ATTR_NULL
 };
 
@@ -784,6 +823,8 @@ static struct elevator_type mq_deadline = {
 		.requests_merged	= dd_merged_requests,
 		.request_merged		= dd_request_merged,
 		.has_work		= dd_has_work,
+		.limit_depth		= dd_limit_depth,
+		.init_hctx		= dd_init_hctx,
 		.init_sched		= dd_init_queue,
 		.exit_sched		= dd_exit_queue,
 	},

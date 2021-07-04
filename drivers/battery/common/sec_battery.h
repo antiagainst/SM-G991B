@@ -947,6 +947,8 @@ struct sec_battery_info {
 	struct wakeup_source *wc_headroom_ws;
 	struct wakeup_source *wpc_tx_ws;
 	struct delayed_work wpc_tx_work;
+	struct wakeup_source *wpc_tx_en_ws;
+	struct delayed_work wpc_tx_en_work;
 #if defined(CONFIG_UPDATE_BATTERY_DATA)
 	struct delayed_work batt_data_work;
 	struct wakeup_source *batt_data_ws;
@@ -1194,6 +1196,7 @@ extern bool sec_bat_hv_wc_normal_mode_check(struct sec_battery_info *battery);
 extern void sec_bat_ext_event_work_content(struct sec_battery_info *battery);
 extern void sec_bat_wc_headroom_work_content(struct sec_battery_info *battery);
 extern void sec_bat_wpc_tx_work_content(struct sec_battery_info *battery);
+extern void sec_bat_wpc_tx_en_work_content(struct sec_battery_info *battery);
 extern void sec_bat_set_wireless20_current(struct sec_battery_info *battery, int rx_power);
 extern void sec_wireless_otg_control(struct sec_battery_info *battery, int enable);
 extern void set_wireless_otg_input_current(struct sec_battery_info *battery);

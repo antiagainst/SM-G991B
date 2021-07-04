@@ -2212,11 +2212,16 @@ void is_hw_configure_llc(bool on, struct is_device_ischain *device, ulong *llc_s
 	struct is_dvfs_scenario_param param;
 	int votf, mcfp;
 
+	is_hw_dvfs_init_face_mask(device, &param);
+	is_hw_dvfs_get_scenario_param(device, 0, &param);
+
 	/* way 1 means alloc 512K LLC */
 	if (on) {
-		is_hw_dvfs_get_scenario_param(device, 0, &param);
-
-		if (param.mode == IS_DVFS_MODE_PHOTO) {
+		if (param.sensor == IS_DVFS_SENSOR_FRONT_VT) {
+			/* Front VT not use LLC */
+			votf = is_llc_way[IS_LLC_SN_DEFAULT].votf;
+			mcfp = is_llc_way[IS_LLC_SN_DEFAULT].mcfp;
+		} else if (param.mode == IS_DVFS_MODE_PHOTO) {
 			votf = is_llc_way[IS_LLC_SN_PREVIEW].votf;
 			mcfp = is_llc_way[IS_LLC_SN_PREVIEW].mcfp;
 		} else if (param.mode == IS_DVFS_MODE_VIDEO) {
@@ -2265,7 +2270,11 @@ void is_hw_configure_llc(bool on, struct is_device_ischain *device, ulong *llc_s
 		info("[LLC] release");
 	}
 
-	llc_enable(on);
+	/* Front VT calls below API to prevent LLC enable by governor */
+	if (param.sensor == IS_DVFS_SENSOR_FRONT_VT)
+		llc_off_disable(on);
+	else
+		llc_enable(on);
 #endif
 }
 
@@ -2274,8 +2283,10 @@ void is_hw_configure_bts_scen(struct is_resourcemgr *resourcemgr, int scenario_i
 	int bts_index = 0;
 
 	switch (scenario_id) {
+	case IS_DVFS_SN_REAR_SINGLE_ULTRAWIDE_VIDEO_FHD120:
 	case IS_DVFS_SN_REAR_SINGLE_TELE_VIDEO_8K24:
 	case IS_DVFS_SN_REAR_SINGLE_TELE_VIDEO_8K30:
+	case IS_DVFS_SN_REAR_SINGLE_WIDE_VIDEO_FHD120:
 	case IS_DVFS_SN_REAR_SINGLE_WIDE_VIDEO_8K24:
 	case IS_DVFS_SN_REAR_SINGLE_WIDE_VIDEO_8K30:
 	case IS_DVFS_SN_TRIPLE_PHOTO:

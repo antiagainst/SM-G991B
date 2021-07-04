@@ -1607,10 +1607,10 @@ static int is_subdev_internal_alloc_buffer(struct is_subdev *subdev,
 	}
 	is_subdev_internal_unlock_shared_framemgr(subdev);
 
-	msinfo(" %s (size: %dx%d, bpp: %d, total: %d, buffer_num: %d, batch_num: %d, shared_framemgr: 0x%lx(ref: %d))",
+	msinfo(" %s (size: %dx%d, bpp: %d, total: %d, buffer_num: %d, batch_num: %d, shared_framemgr(ref: %d))",
 		subdev, subdev, __func__,
 		width, height, subdev->bits_per_pixel,
-		total_alloc_size, subdev->buffer_num, batch_num, shared_framemgr, use_shared_framemgr);
+		total_alloc_size, subdev->buffer_num, batch_num, use_shared_framemgr);
 
 	return 0;
 
